@@ -21,6 +21,9 @@ else:
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "0.0.1"
 
+WIDTH = 640
+HEIGHT = 360
+
 #init global vars
 sfx_volume = 0.3
 sfx = {}
@@ -132,55 +135,18 @@ with dpg.window(label="x4at", tag="main_window"):
         
         # --- SEARCH ---
         with dpg.tab(label="search", tag="search_tab"):
-            fields = ["Hematite", 
-                        "Malachite", 
-                        "Gummite",
-                        "Petroleum", 
-                        "Coal", 
-                        "Gold", 
-                        "Sulfur", 
-                        "Cerussite", 
-                        "Lime", 
-                        "Quartz", 
-                        "Saltpeter", 
-                        "Bauxite", 
-                        "Tektite", 
-                        "Tag",
-                        "Life",
-                        "Note",
-                        "Oceans",
-                        "Atmosphere",
-                        "Tectonics",
-                        "Moons",
-                        "Name",
-                        "Trees",
-                        "StarID",
-                        "PlanetID",
-                        "Hardcoded",
-                        "PlanetCount",
-                        "Index",
-                        "Radius",
-                        "Gravity",
-                        "Limestone",
-                        "Saltground",
-                        "Screenshots",
-                        "SpectralType",
-                        ]
-            fields = [field.lower() for field in fields] #lower fields
-            operators = ["==", "!=", ">", "<", ">=", "<=", "is", "are", "arent", "isnt", "over", "under", "has", "lacks"]
-            field_values = {
-                "atmosphere": ["terran", "martian", "venusian", "steam", "jovian", "titanean", "alkali", "silicate", "none"],
-                "tectonics":["dunes", "ridges", "mountains", "continental", "chaos", "jovian"],
-                "oceans": ["water", "acid", "air", "blood", "methane", "ammonia", "lava"],
-                "trees":["poppy", "lepidodendron", "oak", "earthstar", "palm", "deathcap", "willow", "pine", "mold", "cherry"],
-                "hardcoded": ["true", "false"],
-                "lime": ["true", "false"],
-                "life": ["true", "false"],
-                "saltpeter": ["true", "false"],
-                "limestone": ["true", "false"],
-                "saltground": ["true", "false"],
-                "screenshots":["true", "false"],
-            }
+            with open(locally("other/fields.json"), "r") as f:
+                field_data = json.load(f)
+
+            operators = field_data["operators"]
+            field_values = {k.lower(): v for k, v in field_data["fields"].items()}
+            fields = list(field_values.keys())
+            resource_fields = field_data["resource_fields"]
+
+            #add present to non-boolean fields
+            for field, values in field_values.items():
+                if values != ["true", "false"] and values != [] and "present" not in values:
+                    values.append("present")
 
             for field in fields: #add the rest of the fields
                 if field in field_values.keys():
@@ -237,7 +203,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
                 if len(parts) >= 3:
                     play_sound(locally("sounds/submit3.wav"), sfx_volume)
-                    # submit and clear
+                    #submit and clear
                     complete_conditions.append(new_value)
                     dpg.configure_item("condition_list", items=complete_conditions)
                     dpg.set_value("query_input", "")
@@ -246,7 +212,8 @@ with dpg.window(label="x4at", tag="main_window"):
                 else:
                     dpg.set_value("query_input", new_value + " ")
                     dpg.focus_item("query_input")
-                    # pyautogui in a thread, never sleep on main thread
+
+                    #this is a hack to get around highlighting
                     threading.Timer(0.05, lambda: pyautogui.press("end")).start()
 
             def on_key_press(sender, app_data):
@@ -286,7 +253,10 @@ with dpg.window(label="x4at", tag="main_window"):
                 if not complete_conditions:
                     return
                 
+                dpg.configure_viewport(0, width=HEIGHT, height=WIDTH)
+                
                 searchStringArg = " ".join([f"({condition})" for condition in complete_conditions])
+                print(complete_conditions)
 
                 dpg.hide_item("condition_and_button")
                 dpg.hide_item("query_input")
@@ -298,7 +268,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     play_sound(locally("sounds/reciept1.wav"), sfx_volume)
                     play_sound(locally("sounds/success.wav"), sfx_volume)
 
-                    dpg.hide_item("loading_text")
+                    dpg.set_value("loading_text", f"{len(results)} results {"(MAX)" if len(results) == 100 else ""}")
                     dpg.show_item("results_panel")
                     dpg.show_item("back_button")
                     dpg.delete_item("results_panel", children_only=True)
@@ -311,8 +281,25 @@ with dpg.window(label="x4at", tag="main_window"):
                     results = matches
 
                     for i, result in enumerate(results):
-                        with dpg.child_window(parent="results_panel", width=-1, height=240, border=True, tag=f"result_{i}"):
-                            dpg.add_text(f"{result[0]}\n\n{json.dumps(result[1], indent=4)}") #temporary until i figure out how histograms work here
+                        
+                        #cleanse results for display
+                        result_to_display = result[1].copy()
+                        if "Name" in result_to_display:
+                            del result_to_display["Name"]
+                        for key in list(result_to_display.keys()):
+                            if key in resource_fields:
+                                del result_to_display[key]
+
+                        #get the resources
+                        resource_dict = {}
+                        for key in result[1].keys():
+                            if key in resource_fields:
+                                resource_dict[key] = result[1][key]
+
+                        with dpg.child_window(parent="results_panel", width=230, height=300, border=True, tag=f"result_{i}"):
+                            dpg.add_text(f"{result[0]} {result[1]["Name"] if "Name" in result[1].keys() else "No Name"}\n\n{json.dumps(result_to_display, indent=4)}")
+
+
                 
                 loading_text = ""
                 def add_text_to_shit(text):
@@ -339,14 +326,14 @@ with dpg.window(label="x4at", tag="main_window"):
                         play_sound(locally("sounds/error.wav"), sfx_volume)
                         play_sound(locally("sounds/error2.wav"), sfx_volume)
 
-                        add_text_to_shit("ERROR: No matches found")
+                        dpg.set_value("loading_text", "ERROR: No matches found")
                         dpg.show_item("back_button")
                     except TypeError as e:
                         print(e)
                         play_sound(locally("sounds/error.wav"), sfx_volume)
                         play_sound(locally("sounds/error2.wav"), sfx_volume)
 
-                        add_text_to_shit("ERROR: Couldn't contact server")
+                        dpg.set_value("loading_text", "ERROR: Invalid request or couldn't contact server")
                         dpg.show_item("back_button")
                         
 
@@ -355,6 +342,8 @@ with dpg.window(label="x4at", tag="main_window"):
 
             def back_to_search(sender, app_data):
                 play_sound(locally("sounds/submit4.wav"), sfx_volume)
+
+                dpg.configure_viewport(0, width=WIDTH, height=HEIGHT)
 
                 dpg.hide_item("loading_text")
                 dpg.hide_item("results_panel")
@@ -376,12 +365,12 @@ with dpg.window(label="x4at", tag="main_window"):
                 dpg.add_text(tag="loading_text")
                 dpg.hide_item("loading_text")
 
-                with dpg.child_window(tag="results_panel", width=400, height=250, border=True):
+                with dpg.child_window(tag="results_panel", width=-1, height=500, border=True):
                     dpg.hide_item("results_panel")
 
                 dpg.add_button(label="back", tag="back_button",
                                callback=back_to_search,
-                               width=400,
+                               width=-1,
                                height=20)
                 dpg.hide_item("back_button")
 
