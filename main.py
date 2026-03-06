@@ -425,8 +425,8 @@ with dpg.window(tag="startup_window"):
     dpg.add_text("", tag="boot_text", wrap=600)
 
     #load image
-    load_pil_image("logo_texture", retroify(locally("other/logo.png")).resize((200, 200)))
-    dpg.add_image("logo_texture", pos=(420, 10), tag="logo_image")
+    load_pil_image("logo_texture", retroify(locally("other/logo.png")).resize((50, 50)))
+    dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image")
 
 def boot_sequence():
     def end_boot_sequence():
@@ -474,9 +474,9 @@ def boot_sequence():
     dpg.delete_item("logo_image")
     dpg.delete_item("logo_texture")
     
-    load_pil_image("logo_texture", retroify(locally("other/logo.png"), color4).resize((200, 200)))
+    load_pil_image("logo_texture", retroify(locally("other/logo.png"), color4).resize((50, 50)))
 
-    dpg.add_image("logo_texture", pos=(420, 10), tag="logo_image", parent="startup_window")
+    dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
     #debug shit
     if settings["debug_mode"]: end_boot_sequence(); return
