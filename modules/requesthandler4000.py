@@ -4,6 +4,8 @@ import uuid
 import time
 
 BASE_URL = "https://x4alliancebackend-default-rtdb.firebaseio.com"
+CLIENT_ID = str(uuid.uuid4()) #id used to identify user in current session
+
 polls = 5
 
 def request(command:str="", args:dict={}):
@@ -14,7 +16,7 @@ def request(command:str="", args:dict={}):
     requests.put(f"{BASE_URL}/requests/{req_id}.json", json={
         "command": command,
         "args": args,
-        "ip": "test",
+        "id": CLIENT_ID,
         "status": "pending"
     })
 

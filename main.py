@@ -21,12 +21,13 @@ else:
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "0.0.1"
 
-WIDTH = 640
-HEIGHT = 360
+WIDTH = 360
+HEIGHT = 640
 
 #init global vars
 sfx_volume = 0.3
 sfx = {}
+current_get_planet = None
 
 #functions
 def locally(relative_path):
@@ -126,12 +127,15 @@ mixer.init()
 with dpg.font_registry():
     with dpg.font(locally("other/fixedsys.ttf"), 14) as default_font:
         pass
+    with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
+        pass
+
 dpg.bind_font(default_font)
 
 # --- MAIN WINDOW ---
 with dpg.window(label="x4at", tag="main_window"):
     
-    with dpg.tab_bar():
+    with dpg.tab_bar(tag="tab_bar", callback=lambda: play_sound(locally("sounds/click.wav"))):
         
         # --- SEARCH ---
         with dpg.tab(label="search", tag="search_tab"):
@@ -247,13 +251,20 @@ with dpg.window(label="x4at", tag="main_window"):
                 complete_conditions.pop(complete_conditions.index(app_data))
                 dpg.configure_item("condition_list", items=complete_conditions)
 
+            def on_get_click(sender, app_data):
+                global current_get_planet
+                current_get_planet = sender[:-4]
+
+                play_sound(locally("sounds/click2.wav"))
+                dpg.set_value("tab_bar", "get_tab")
+
             def submit_conditions(sender, app_data):
                 play_sound(locally("sounds/submit5.wav"))
 
                 if not complete_conditions:
                     return
                 
-                dpg.configure_viewport(0, width=HEIGHT, height=WIDTH)
+                dpg.configure_viewport(0, height=700)
                 
                 searchStringArg = " ".join([f"({condition})" for condition in complete_conditions])
                 print(complete_conditions)
@@ -265,6 +276,9 @@ with dpg.window(label="x4at", tag="main_window"):
 
                 def populate_results(results):
 
+                    def pretty_results_from_dict(results_dict):
+                        return "\n".join([f"{key}: {value}" for key, value in results_dict.items()])
+
                     play_sound(locally("sounds/reciept1.wav"), sfx_volume)
                     play_sound(locally("sounds/success.wav"), sfx_volume)
 
@@ -273,12 +287,11 @@ with dpg.window(label="x4at", tag="main_window"):
                     dpg.show_item("back_button")
                     dpg.delete_item("results_panel", children_only=True)
 
-                    #copied sorting code from x4a (i didn't want to rename too many vars so i just transferred the data from one to another)
-                    matches = results
-                    matches = [(tuple([int(id_num) for id_num in match[0].split("-")]), match[1]) for match in matches] #turn StarID into int tuple
-                    matches = sorted(matches) #sort matches
-                    matches = [("-".join([str(id_num) for id_num in match[0]]), match[1]) for match in matches] #turn int tuple into StarID
-                    results = matches
+
+                    #copied sorting code from x4a
+                    results = [(tuple([int(id_num) for id_num in result[0].split("-")]), result[1]) for result in results] #turn StarID into int tuple
+                    results = sorted(results) #sort matches
+                    results = [("-".join([str(id_num) for id_num in result[0]]), result[1]) for result in results] #turn int tuple into StarID
 
                     for i, result in enumerate(results):
                         
@@ -290,22 +303,26 @@ with dpg.window(label="x4at", tag="main_window"):
                             if key in resource_fields:
                                 del result_to_display[key]
 
-                        #get the resources
-                        resource_dict = {}
-                        for key in result[1].keys():
-                            if key in resource_fields:
-                                resource_dict[key] = result[1][key]
+                        resource_dict = {key: result[1][key] for key in result[1] if key in resource_fields}
 
-                        with dpg.child_window(parent="results_panel", width=230, height=300, border=True, tag=f"result_{i}"):
-                            dpg.add_text(f"{result[0]} {result[1]["Name"] if "Name" in result[1].keys() else "No Name"}\n\n{json.dumps(result_to_display, indent=4)}")
+                        child = dpg.add_child_window(parent="results_panel", width=300, height=400, border=True, tag=f"result_{i}")
 
+                        dpg.add_text(
+                            f"{result[0]} {result[1].get('Name', 'No Name')}",
+                            parent=child,
+                            wrap=180,
+                            tag=f"{result[0]}_result_title"
+                        )
+                        dpg.bind_item_font(f"{result[0]}_result_title", big_font)
 
-                
-                loading_text = ""
-                def add_text_to_shit(text):
-                    nonlocal loading_text
-                    loading_text = f"{loading_text}\n{text}"
-                    dpg.set_value("loading_text", loading_text)
+                        dpg.add_text(
+                            f"\n{pretty_results_from_dict(result_to_display)}",
+                            parent=child,
+                            wrap=180
+                        )
+
+                        dpg.add_button(label="get", width=80, height=300, tag=f"{result[0]}_get", parent=child, pos=(210, 10),
+                                       callback=on_get_click)
 
                 def do_search():
                     loading_sound = play_sound(locally("sounds/loading2.wav"), sfx_volume)
@@ -319,22 +336,20 @@ with dpg.window(label="x4at", tag="main_window"):
                 def on_complete(result):
                     done[0] = True
 
-                    try:
+                    def set_text(text):
+                        dpg.set_value("loading_text", text)
+
+                    if result == None:
+                        set_text("ERROR: couldn't contact server")
+                    elif 'error' in result.keys():
+                        set_text(f"ERROR: {result['error']}")
+                    else:
                         populate_results(result['matches'])
-                    except KeyError as e:
-                        print(e)
-                        play_sound(locally("sounds/error.wav"), sfx_volume)
-                        play_sound(locally("sounds/error2.wav"), sfx_volume)
-
-                        dpg.set_value("loading_text", "ERROR: No matches found")
-                        dpg.show_item("back_button")
-                    except TypeError as e:
-                        print(e)
-                        play_sound(locally("sounds/error.wav"), sfx_volume)
-                        play_sound(locally("sounds/error2.wav"), sfx_volume)
-
-                        dpg.set_value("loading_text", "ERROR: Invalid request or couldn't contact server")
-                        dpg.show_item("back_button")
+                        return
+                    
+                    play_sound(locally("sounds/error.wav"), sfx_volume)
+                    play_sound(locally("sounds/error2.wav"), sfx_volume)
+                    dpg.show_item("back_button")
                         
 
                 threading.Thread(target=do_search, daemon=True).start()
@@ -343,7 +358,7 @@ with dpg.window(label="x4at", tag="main_window"):
             def back_to_search(sender, app_data):
                 play_sound(locally("sounds/submit4.wav"), sfx_volume)
 
-                dpg.configure_viewport(0, width=WIDTH, height=HEIGHT)
+                dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
 
                 dpg.hide_item("loading_text")
                 dpg.hide_item("results_panel")
@@ -365,7 +380,7 @@ with dpg.window(label="x4at", tag="main_window"):
                 dpg.add_text(tag="loading_text")
                 dpg.hide_item("loading_text")
 
-                with dpg.child_window(tag="results_panel", width=-1, height=500, border=True):
+                with dpg.child_window(tag="results_panel", width=-1, height=570, border=True):
                     dpg.hide_item("results_panel")
 
                 dpg.add_button(label="back", tag="back_button",
@@ -377,18 +392,18 @@ with dpg.window(label="x4at", tag="main_window"):
                 with dpg.group(horizontal=True, tag="condition_and_button"):
                     dpg.add_listbox([], tag="condition_list",
                                     callback=on_condition_click,
-                                    width=400, num_items=9)
+                                    width=200, num_items=9)
                     
                     dpg.add_button(label="submit", tag="submit_button",
                                    callback=submit_conditions,
-                                   width=150,
+                                   width=100,
                                    height=170)
 
                 dpg.add_input_text(tag="query_input", #query
                                 hint="<field> <operator> <value>",
                                 callback=on_input_change,
                                 on_enter=True,
-                                width=400)
+                                width=200)
                 
                 dpg.add_listbox([], tag="suggestion_list", #autofill
                                 callback=on_suggestion_click,
@@ -396,11 +411,11 @@ with dpg.window(label="x4at", tag="main_window"):
                                 
                     
         # --- GET --- 
-        with dpg.tab(label="get"):
+        with dpg.tab(label="get", tag="get_tab"):
             dpg.add_text("TBA")
         
         # --- EDIT ---
-        with dpg.tab(label="edit"):
+        with dpg.tab(label="edit", tag="edit_tab"):
             dpg.add_text("TBA")
 
 #startup sequence
@@ -410,8 +425,8 @@ with dpg.window(tag="startup_window"):
     dpg.add_text("", tag="boot_text", wrap=600)
 
     #load image
-    load_pil_image("logo", retroify(locally("other/logo.png")).resize((200, 200)))
-    dpg.add_image("logo", pos=(420, 10))
+    load_pil_image("logo_texture", retroify(locally("other/logo.png")).resize((200, 200)))
+    dpg.add_image("logo_texture", pos=(420, 10), tag="logo_image")
 
 def boot_sequence():
     def end_boot_sequence():
@@ -451,6 +466,17 @@ def boot_sequence():
     color3 = tuple(settings["color3"])
     color4 = tuple(settings["color4"])
     set_theme(color1, color2, color3, color4)
+    add_boot_text(f"color1: {color1}")
+    add_boot_text(f"color2: {color2}")
+    add_boot_text(f"color3: {color3}")
+    add_boot_text(f"color4: {color4}")
+
+    dpg.delete_item("logo_image")
+    dpg.delete_item("logo_texture")
+    
+    load_pil_image("logo_texture", retroify(locally("other/logo.png"), color4).resize((200, 200)))
+
+    dpg.add_image("logo_texture", pos=(420, 10), tag="logo_image", parent="startup_window")
 
     #debug shit
     if settings["debug_mode"]: end_boot_sequence(); return
@@ -488,7 +514,12 @@ def boot_sequence():
     end_boot_sequence()
     
 
-dpg.create_viewport(title="x4AllianceTerminal", small_icon=locally("other/logo.ico"), large_icon=locally("other/logo.ico"), width=640, height=360, always_on_top=True)
+dpg.create_viewport(title="x4AllianceTerminal", 
+                    small_icon=locally("other/logo.ico"), 
+                    large_icon=locally("other/logo.ico"), 
+                    width=WIDTH, height=WIDTH,
+                    x_pos=1500, 
+                    always_on_top=True)
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.set_primary_window("startup_window", True)
