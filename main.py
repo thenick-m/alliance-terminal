@@ -586,6 +586,10 @@ with dpg.window(label="x4at", tag="main_window"):
                                             category=dpg.mvThemeCat_Plots)
                     dpg.bind_item_theme(series, present_theme)
 
+                #shorten fields
+                for i in range(len(all_fields)):
+                    all_fields[i] = f"{all_fields[i][:4]}."
+
                 dpg.set_axis_ticks("get_x_axis", 
                                 tuple(zip(all_fields, [float(j) for j in range(len(all_fields))])))
                 dpg.set_axis_limits("get_x_axis", -0.5, len(all_fields) - 0.5)
