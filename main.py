@@ -22,12 +22,21 @@ METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "0.0.1"
 
 WIDTH = 360
-HEIGHT = 640
+HEIGHT = 700
+
 
 #init global vars
 sfx_volume = 0.3
 sfx = {}
+
+color1 = (0, 0, 0)
+color2 = (40, 20, 5)
+color3 = (84, 41, 9)
+color4 = (250, 134, 55)
+
+search_results_view = False
 current_get_planet = None
+
 
 #functions
 def locally(relative_path):
@@ -75,6 +84,31 @@ def load_pil_image(tag, img):
     with dpg.texture_registry():
         dpg.add_static_texture(width=width, height=height, default_value=data, tag=tag)
 
+def switch_search_view(sender, app_data):
+    global search_results_view
+
+    if search_results_view:
+        play_sound(locally("sounds/submit4.wav"), sfx_volume)
+
+        dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
+
+        search_results_view = False
+        dpg.hide_item("loading_text")
+        dpg.hide_item("results_panel")
+        dpg.hide_item("back_button")
+        dpg.show_item("condition_and_button")
+        dpg.show_item("submit_button")
+        dpg.show_item("query_input")
+        dpg.show_item("suggestion_list")
+    else:
+        dpg.configure_viewport(0, height=HEIGHT)
+        search_results_view = True
+        dpg.hide_item("condition_and_button")
+        dpg.hide_item("query_input")
+        dpg.hide_item("suggestion_list")
+        dpg.show_item("loading_text")
+
+
 #theme config
 def set_theme(
     color1=(0, 0, 0),
@@ -91,6 +125,9 @@ def set_theme(
             dpg.add_theme_style(dpg.mvStyleVar_PopupRounding, 0, category=dpg.mvThemeCat_Core)
             dpg.add_theme_style(dpg.mvStyleVar_TabRounding, 0, category=dpg.mvThemeCat_Core)
             dpg.add_theme_style(dpg.mvStyleVar_ScrollbarRounding, 0, category=dpg.mvThemeCat_Core)
+            dpg.add_theme_color(dpg.mvPlotCol_Fill, color4, category=dpg.mvThemeCat_Plots)
+            dpg.add_theme_color(dpg.mvThemeCol_ModalWindowDimBg, color2+(100,))
+            dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, color2)
             dpg.add_theme_color(dpg.mvThemeCol_WindowBg, color1)
             dpg.add_theme_color(dpg.mvThemeCol_Text, color4)
             dpg.add_theme_color(dpg.mvThemeCol_Border, color4)
@@ -134,8 +171,24 @@ dpg.bind_font(default_font)
 
 # --- MAIN WINDOW ---
 with dpg.window(label="x4at", tag="main_window"):
+    def on_tab_switch(sender, app_data):
+        play_sound(locally("sounds/click.wav"))
+
+        tab = tab = dpg.get_item_alias(app_data)
+
+        if tab == "search_tab":
+            if search_results_view:
+                dpg.configure_viewport(0, width=WIDTH, height=HEIGHT)
+            else:
+                dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
+
+        elif tab == "get_tab":
+            dpg.configure_viewport(0, width=WIDTH, height=HEIGHT)
+        elif tab == "settings_tab":
+            dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
+
     
-    with dpg.tab_bar(tag="tab_bar", callback=lambda: play_sound(locally("sounds/click.wav"))):
+    with dpg.tab_bar(tag="tab_bar", callback=on_tab_switch):
         
         # --- SEARCH ---
         with dpg.tab(label="search", tag="search_tab"):
@@ -251,28 +304,18 @@ with dpg.window(label="x4at", tag="main_window"):
                 complete_conditions.pop(complete_conditions.index(app_data))
                 dpg.configure_item("condition_list", items=complete_conditions)
 
-            def on_get_click(sender, app_data):
-                global current_get_planet
-                current_get_planet = sender[:-4]
-
-                play_sound(locally("sounds/click2.wav"))
-                dpg.set_value("tab_bar", "get_tab")
-
             def submit_conditions(sender, app_data):
-                play_sound(locally("sounds/submit5.wav"))
+                global search_results_view
+
+                play_sound(locally("sounds/submit5.wav"), sfx_volume)
 
                 if not complete_conditions:
                     return
                 
-                dpg.configure_viewport(0, height=700)
-                
                 searchStringArg = " ".join([f"({condition})" for condition in complete_conditions])
                 print(complete_conditions)
 
-                dpg.hide_item("condition_and_button")
-                dpg.hide_item("query_input")
-                dpg.hide_item("suggestion_list")
-                dpg.show_item("loading_text")
+                switch_search_view(0, 0)
 
                 def populate_results(results):
 
@@ -287,6 +330,8 @@ with dpg.window(label="x4at", tag="main_window"):
                     dpg.show_item("back_button")
                     dpg.delete_item("results_panel", children_only=True)
 
+                    #dict of matches
+                    results_dict = {result[0]: result[1] for result in results}
 
                     #copied sorting code from x4a
                     results = [(tuple([int(id_num) for id_num in result[0].split("-")]), result[1]) for result in results] #turn StarID into int tuple
@@ -321,8 +366,17 @@ with dpg.window(label="x4at", tag="main_window"):
                             wrap=180
                         )
 
-                        dpg.add_button(label="get", width=80, height=300, tag=f"{result[0]}_get", parent=child, pos=(210, 10),
-                                       callback=on_get_click)
+                        def change_get_planet(sender, app_data):
+                            global current_get_planet
+
+                            current_get_planet = results_dict[sender]
+
+                            play_sound(locally("sounds/click2.wav"))
+                            populate_get_tab(current_get_planet)
+                            dpg.set_value("tab_bar", "get_tab")
+
+                        dpg.add_button(label="get", width=80, height=300, tag=f"{result[0]}", parent=child, pos=(210, 10),
+                                       callback=change_get_planet)
 
                 def do_search():
                     loading_sound = play_sound(locally("sounds/loading2.wav"), sfx_volume)
@@ -355,20 +409,6 @@ with dpg.window(label="x4at", tag="main_window"):
                 threading.Thread(target=do_search, daemon=True).start()
                 run_async(lambda: rq.search(searchStringArg), on_complete)
 
-            def back_to_search(sender, app_data):
-                play_sound(locally("sounds/submit4.wav"), sfx_volume)
-
-                dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
-
-                dpg.hide_item("loading_text")
-                dpg.hide_item("results_panel")
-                dpg.hide_item("back_button")
-                dpg.show_item("condition_and_button")
-                dpg.show_item("submit_button")
-                dpg.show_item("query_input")
-                dpg.show_item("suggestion_list")
-
-
             with dpg.handler_registry():
                 dpg.add_key_release_handler(callback=on_key_release)
                 dpg.add_key_press_handler(callback=on_key_press)
@@ -384,7 +424,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     dpg.hide_item("results_panel")
 
                 dpg.add_button(label="back", tag="back_button",
-                               callback=back_to_search,
+                               callback=switch_search_view,
                                width=-1,
                                height=20)
                 dpg.hide_item("back_button")
@@ -412,13 +452,206 @@ with dpg.window(label="x4at", tag="main_window"):
                     
         # --- GET --- 
         with dpg.tab(label="get", tag="get_tab"):
-            dpg.add_text("TBA")
-        
+            with dpg.child_window(tag="get_tab_content", width=-1, height=-1, border=False):
+                dpg.add_text("No planet selected", tag="get_placeholder")
+
+        def populate_get_tab(planet):
+            
+            dpg.delete_item("get_tab_content", children_only=True)
+            
+
+            if not planet:
+                dpg.add_text("No planet selected", parent="get_tab_content")
+                return
+
+            #separate data
+            name = planet.get("Name", "No Name")
+            star_id = planet.get("StarID", "None")
+            index = planet.get("Index", "None")
+            planet_id = planet.get("PlanetID", "None")
+            planet_count = planet.get("PlanetCount", "None")
+
+            physical = {
+                "Gravity": planet.get("Gravity"),
+                "Radius": planet.get("Radius"),
+                "Moons": planet.get("Moons"),
+            }
+
+            environment = {
+                "Atmosphere": planet.get("Atmosphere"),
+                "Oceans": planet.get("Oceans"),
+                "Tectonics": planet.get("Tectonics"),
+                "Life": planet.get("Life"),
+            }
+
+            resource_fields_normalized = [f.lower() for f in resource_fields]
+
+            deposit_fields = ["Lime", "Quartz", "Saltpeter", "Limestone", "Saltground", "Trees", "Quartz"]
+
+            deposit_resources = {k: v for k, v in planet.items() if k in deposit_fields}
+
+            numeric_resources = {k: v for k, v in planet.items() 
+                                if k.lower() in resource_fields_normalized and not isinstance(v, bool)}
+            
+
+            # --- HEADER ---
+            dpg.add_text(f"{name}", tag="planet_name_header", parent="get_tab_content")
+            dpg.bind_item_font("planet_name_header", big_font)
+            dpg.add_text(f"Star {star_id}  |  Planet {planet_id}/{planet_count}  |  Index {index}", 
+                        parent="get_tab_content")
+            dpg.add_separator(parent="get_tab_content")
+
+            #physical stats list
+            stats_graph = dpg.add_child_window(parent="get_tab_content", width=-1, height=200, border=True)
+            dpg.add_text("[ PHYSICAL ]", parent=stats_graph)
+            dpg.add_separator(parent=stats_graph)
+            for key, val in physical.items():
+                if val is not None:
+                    dpg.add_text(f"{key:<10} {val}", parent=stats_graph)
+
+            dpg.add_text("", parent=stats_graph)
+            dpg.add_text("[ ENVIRONMENT ]", parent=stats_graph)
+            dpg.add_separator(parent=stats_graph)
+            for key, val in environment.items():
+                if val is not None:
+                    display = str(val).lower() if isinstance(val, bool) else val
+                    dpg.add_text(f"{key:<10} {display}", parent=stats_graph)
+
+            dpg.add_separator(parent="get_tab_content")
+
+            #numeric resources bar chart
+            
+            resource_graph = dpg.add_child_window(parent="get_tab_content", width=-1, height=230, border=True)
+
+            # header with toggle button
+            header_group = dpg.add_group(horizontal=True, parent=resource_graph)
+            dpg.add_text("[ RESOURCES ]", parent=header_group)
+            dpg.add_button(label="text", tag="resource_toggle", parent=header_group, width=-1,
+                        callback=lambda: toggle_resource_view(numeric_resources))
+            
+            dpg.add_separator(parent=resource_graph)
+
+            resource_view = ["graph"]  #list so it's mutable from nested function
+
+            def toggle_resource_view(numeric_resources):
+                if resource_view[0] == "graph":
+                    resource_view[0] = "text"
+                    dpg.set_item_label("resource_toggle", "graph")
+                    dpg.hide_item("resource_plot_container")
+                    dpg.show_item("resource_text_container")
+                    dpg.hide_item("get_legend")
+                else:
+                    resource_view[0] = "graph"
+                    dpg.set_item_label("resource_toggle", "text")
+                    dpg.show_item("resource_plot_container")
+                    dpg.hide_item("resource_text_container")
+                    dpg.show_item("get_legend")
+
+            resource_plot_container = dpg.add_group(parent=resource_graph, tag="resource_plot_container")
+            if numeric_resources:
+                plot = dpg.add_plot(height=150, width=-1, parent=resource_plot_container,
+                                no_menus=True, no_box_select=True, no_mouse_pos=True, no_inputs=True)
+                x_axis = dpg.add_plot_axis(dpg.mvXAxis, parent=plot, tag="get_x_axis", no_gridlines=True)
+                y_axis = dpg.add_plot_axis(dpg.mvYAxis, parent=plot, tag="get_y_axis", no_gridlines=True)
+
+                present_fields = []
+                known_fields = []
+                present_x = []
+                known_x = []
+                present_y = []
+                known_y = []
+
+                all_fields = list(numeric_resources.keys())
+                for j, (key, val) in enumerate(numeric_resources.items()):
+                    if val == "Present" or val == "present":
+                        present_fields.append(key)
+                        present_x.append(float(j))
+                        present_y.append(1.0)
+                    else:
+                        known_fields.append(key)
+                        known_x.append(float(j))
+                        known_y.append(float(val))
+
+                if known_x:
+                    dpg.add_bar_series(x=known_x, y=known_y, weight=0.7,
+                                    label="Known", parent=y_axis)
+
+                if present_x:
+                    series = dpg.add_bar_series(x=present_x, y=present_y, weight=0.7,
+                                            label="Present", parent=y_axis)
+                    with dpg.theme() as present_theme:
+                        with dpg.theme_component(dpg.mvBarSeries):
+                            dpg.add_theme_color(dpg.mvPlotCol_Fill,
+                                            color4+(100,),
+                                            category=dpg.mvThemeCat_Plots)
+                    dpg.bind_item_theme(series, present_theme)
+
+                dpg.set_axis_ticks("get_x_axis", 
+                                tuple(zip(all_fields, [float(j) for j in range(len(all_fields))])))
+                dpg.set_axis_limits("get_x_axis", -0.5, len(all_fields) - 0.5)
+                dpg.fit_axis_data("get_y_axis")
+                legend_group = dpg.add_group(horizontal=True, parent=resource_graph)
+                dpg.add_text("[half-shaded] = Unknown\n[fully-shaded] = Known", parent=legend_group, tag="get_legend")
+            else:
+                    dpg.add_text(f"No resources logged", parent=resource_plot_container)
+
+            #text container
+            resource_text_container = dpg.add_group(parent=resource_graph, tag="resource_text_container", show=False)
+            if numeric_resources:
+                for key, val in numeric_resources.items():
+                    display = "present" if val in ["Present", "present"] else str(val)
+                    dpg.add_text(f"{key:<12} {display}", parent=resource_text_container)
+            else:
+                    dpg.add_text(f"No resources logged", parent=resource_text_container)
+
+            # --- BOOLEAN RESOURCES ---
+            dpg.add_separator(parent="get_tab_content")
+            dpg.add_text("[ DEPOSITS ]", parent="get_tab_content")
+            bool_group = dpg.add_group(horizontal=True, parent="get_tab_content")
+            for key, val in deposit_resources.items():
+                dpg.add_text(f"[{key}: {val}", parent=bool_group)
+
         # --- EDIT ---
         with dpg.tab(label="edit", tag="edit_tab"):
             dpg.add_text("TBA")
 
-#startup sequence
+        # --- SETTINGS --- 
+        with dpg.tab(label="settings", tag="settings_tab"):
+
+            def change_volume(app_data, sender):
+                global sfx_volume
+
+                play_sound(locally("sounds/scroll.wav"), sfx_volume, max_time=50)
+
+                sfx_volume = sender
+
+            dpg.add_slider_float(
+                label="sfx volume",
+                default_value=1,
+                min_value=0,
+                max_value=1,
+                callback=change_volume
+                )
+            
+            def sales_demolition(sender, app_data):
+                play_sound(locally("sounds/click2.wav"))
+                with dpg.window(label="kys bro", modal=True, no_close=True,
+                                no_resize=True, no_move=True,
+                                tag="thinking_window",
+                                pos=(WIDTH//2 - 80, WIDTH//2 - 30)):
+                    dpg.add_text("thinking...", tag="thinking_text")
+
+                def bro_thinking():
+                    while True:
+                        dots = "." * (int(time.perf_counter() * 2) % 4)
+                        dpg.set_value("thinking_text", f"thinking{dots}")
+                        time.sleep(0.1)
+
+                threading.Thread(target=bro_thinking, daemon=True).start()
+
+            dpg.add_button(label="recompute base encryption hash key", callback=sales_demolition)
+
+# --- startup sequence --- 
 with dpg.window(tag="startup_window"):
 
     #load text

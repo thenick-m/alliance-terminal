@@ -4,7 +4,7 @@
     "color3": [84, 41, 9],
     "color4": [250, 134, 55],
     "sfx_volume": 1,
-    "debug_mode": false,
+    "debug_mode": true,
 
     "boot_up_time_hang": 0.5
 }
