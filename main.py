@@ -1,4 +1,4 @@
-import dearpygui.dearpygui as dpg
+from dearpygui import dearpygui as dpg
 import time
 import threading
 from pygame import mixer
@@ -10,6 +10,9 @@ import sys
 import os
 
 from modules import requesthandler4000 as rq
+from modules import state
+from modules import audioshit as sound
+from modules import imagehelpers
 
 if hasattr(sys, '_MEIPASS'):  #pyinstaller
     BASE_DIR = sys._MEIPASS
@@ -24,19 +27,7 @@ VERSION = "0.0.1"
 WIDTH = 363
 HEIGHT = 705
 
-debug = True
-
-#init global vars
-sfx_volume = 0.3
-sfx = {}
-
-color1 = (0, 0, 0)
-color2 = (40, 20, 5)
-color3 = (84, 41, 9)
-color4 = (250, 134, 55)
-
-search_results_view = False
-current_get_planet = None
+debug = False
 
 
 #functions
@@ -46,54 +37,14 @@ def locally(relative_path):
 def run_async(fn, callback):
     threading.Thread(target=lambda: callback(fn()), daemon=True).start()
 
-def play_sound(filename, volume=1, max_time=None):
-    global sfx
-
-    if filename in sfx.keys():
-        sound = sfx[filename]
-    else:
-        sfx[filename] = mixer.Sound(filename)
-        sound = sfx[filename]
-
-
-    sound.set_volume(volume)
-    if max_time:
-        sound.play(maxtime=max_time)
-    else:
-        sound.play()
-
-    return sound
-
-def retroify(image_path, tint=(250, 134, 55)):
-    img = Image.open(image_path).convert("RGBA")
-    r, g, b, a = img.split()  #preserve original alpha
-    
-    grayscale = Image.merge("RGB", (r, g, b)).convert("L")
-    tinted = Image.new("RGB", img.size, tint)
-    tinted = Image.blend(Image.new("RGB", img.size, (0,0,0)), tinted, 1.0)
-    
-    tinted = Image.composite(tinted, Image.new("RGB", img.size, (0,0,0)), grayscale)
-
-    tinted.putalpha(a)
-    return tinted
-
-def load_pil_image(tag, img):
-    img = img.convert("RGBA")
-    width, height = img.size
-    data = [x/255.0 for x in img.tobytes()]
-    
-    with dpg.texture_registry():
-        dpg.add_static_texture(width=width, height=height, default_value=data, tag=tag)
-
 def switch_search_view(sender, app_data):
-    global search_results_view
 
-    if search_results_view:
-        play_sound(locally("sounds/submit4.wav"), sfx_volume)
+    if state.search_results_view:
+        sound.play_sound(locally("sounds/submit4.wav"))
 
         dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
 
-        search_results_view = False
+        state.search_results_view = False
         dpg.hide_item("loading_text")
         dpg.hide_item("results_panel")
         dpg.hide_item("back_button")
@@ -103,7 +54,7 @@ def switch_search_view(sender, app_data):
         dpg.show_item("suggestion_list")
     else:
         dpg.configure_viewport(0, height=HEIGHT)
-        search_results_view = True
+        state.search_results_view = True
         dpg.hide_item("condition_and_button")
         dpg.hide_item("query_input")
         dpg.hide_item("suggestion_list")
@@ -151,12 +102,13 @@ def set_theme(
     color1_set=(0, 0, 0),
     color2_set=(40, 20, 5),
     color3_set=(84, 41, 9),
-    color4_set=(250, 134, 55)):
+    color4_set=(250, 134, 55)
+    ):
 
-    global color1; color1 = color1_set
-    global color2; color2 = color2_set
-    global color3; color3 = color3_set
-    global color4; color4 = color4_set
+    state.color1 = color1_set
+    state.color2 = color2_set
+    state.color3 = color3_set
+    state.color4 = color4_set
 
     crt_theme = make_theme(color1_set, color2_set, color3_set, color4_set)
 
@@ -183,12 +135,12 @@ dpg.bind_font(default_font)
 # --- MAIN WINDOW ---
 with dpg.window(label="x4at", tag="main_window"):
     def on_tab_switch(sender, app_data):
-        play_sound(locally("sounds/click.wav"))
+        sound.play_sound(locally("sounds/click.wav"))
 
-        tab = tab = dpg.get_item_alias(app_data)
+        tab = dpg.get_item_alias(app_data) #this is supposed to unfuck it since dpg app_data sends as dpg id 
 
         if tab == "search_tab":
-            if search_results_view:
+            if state.search_results_view:
                 dpg.configure_viewport(0, width=WIDTH, height=HEIGHT)
             else:
                 dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
@@ -256,7 +208,7 @@ with dpg.window(label="x4at", tag="main_window"):
                 dpg.configure_item("suggestion_list", items=suggestions)
 
             def on_suggestion_click(sender, app_data):
-                play_sound(locally("sounds/loading2.wav"), sfx_volume, max_time=100)
+                sound.play_sound(locally("sounds/loading2.wav"), max_time=100)
 
                 #parse the query input
                 current = dpg.get_value("query_input")
@@ -270,7 +222,7 @@ with dpg.window(label="x4at", tag="main_window"):
                 new_value = " ".join(parts)
 
                 if len(parts) >= 3:
-                    play_sound(locally("sounds/submit3.wav"), sfx_volume)
+                    sound.play_sound(locally("sounds/submit3.wav"))
                     #submit and clear
                     complete_conditions.append(new_value)
                     dpg.configure_item("condition_list", items=complete_conditions)
@@ -295,7 +247,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     #check if the condition is valid ok
                     query_input:str = dpg.get_value("query_input").strip()
                     if len(query_input.split(" ")) >= 3:
-                        play_sound(locally("sounds/submit3.wav"), sfx_volume)
+                        sound.play_sound(locally("sounds/submit3.wav"))
 
                         #submit and clear
                         complete_conditions.append(query_input)
@@ -309,16 +261,15 @@ with dpg.window(label="x4at", tag="main_window"):
                     on_input_change(None, dpg.get_value("query_input"))
 
             def on_condition_click(sender, app_data):
-                play_sound(locally("sounds/submit4.wav"), sfx_volume)
+                sound.play_sound(locally("sounds/submit4.wav"))
 
                 #delete tjhat shit yk what im sayn 😂
                 complete_conditions.pop(complete_conditions.index(app_data))
                 dpg.configure_item("condition_list", items=complete_conditions)
 
             def submit_conditions(sender, app_data): #TODO: move this shit into another module
-                global search_results_view
 
-                play_sound(locally("sounds/submit5.wav"), sfx_volume)
+                sound.play_sound(locally("sounds/submit5.wav"))
 
                 if not complete_conditions:
                     return
@@ -333,8 +284,8 @@ with dpg.window(label="x4at", tag="main_window"):
                     def pretty_results_from_dict(results_dict):
                         return "\n".join([f"{key}: {value}" for key, value in results_dict.items()])
 
-                    play_sound(locally("sounds/reciept1.wav"), sfx_volume)
-                    play_sound(locally("sounds/success.wav"), sfx_volume)
+                    sound.play_sound(locally("sounds/reciept1.wav"))
+                    sound.play_sound(locally("sounds/success.wav"))
 
                     dpg.set_value("loading_text", f"{len(results)} results {'(MAX)' if len(results) == 100 else ''}")
                     dpg.show_item("results_panel")
@@ -378,19 +329,18 @@ with dpg.window(label="x4at", tag="main_window"):
                         )
 
                         def change_get_planet(sender, app_data):
-                            global current_get_planet
 
-                            current_get_planet = results_dict[sender]
+                            state.current_get_planet = results_dict[sender]
 
-                            play_sound(locally("sounds/click2.wav"))
-                            populate_get_tab(current_get_planet)
+                            sound.play_sound(locally("sounds/click2.wav"))
+                            populate_get_tab(state.current_get_planet)
                             dpg.set_value("tab_bar", "get_tab")
 
                         dpg.add_button(label="get", width=80, height=300, tag=f"{result[0]}", parent=child, pos=(210, 10),
                                        callback=change_get_planet)
 
                 def do_search():
-                    loading_sound = play_sound(locally("sounds/loading2.wav"), sfx_volume)
+                    loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
                     while not done[0]:
                         dpg.set_value("loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                         time.sleep(0.1)
@@ -412,8 +362,8 @@ with dpg.window(label="x4at", tag="main_window"):
                         populate_results(result['matches'])
                         return
                     
-                    play_sound(locally("sounds/error.wav"), sfx_volume)
-                    play_sound(locally("sounds/error2.wav"), sfx_volume)
+                    sound.play_sound(locally("sounds/error.wav"))
+                    sound.play_sound(locally("sounds/error2.wav"))
                     dpg.show_item("back_button")
                         
 
@@ -423,13 +373,13 @@ with dpg.window(label="x4at", tag="main_window"):
             with dpg.handler_registry():
                 dpg.add_key_release_handler(callback=on_key_release)
                 dpg.add_key_press_handler(callback=on_key_press)
-                dpg.add_mouse_wheel_handler(callback=lambda sender, app_data: play_sound(locally("sounds/scroll.wav"), sfx_volume, max_time=50))
+                dpg.add_mouse_wheel_handler(callback=lambda sender, app_data: sound.play_sound(locally("sounds/scroll.wav"), max_time=50))
 
             #UI
             with dpg.group(parent="search_tab"):
 
                 def go_through_quit(sender, app_data):
-                    play_sound(locally("sounds/loading1.wav"))
+                    sound.play_sound(locally("sounds/loading1.wav"))
 
                     boot_text = ""
                     def add_boot_text(text):
@@ -450,11 +400,11 @@ with dpg.window(label="x4at", tag="main_window"):
                     try:
                         with open(locally('other/settings.json'), 'w', encoding='utf-8') as file:
                             settings = {}
-                            settings["color1"] = color1
-                            settings["color2"] = color2
-                            settings["color3"] = color3
-                            settings["color4"] = color4
-                            settings["sfx_volume"] = sfx_volume
+                            settings["color1"] = state.color1
+                            settings["color2"] = state.color2
+                            settings["color3"] = state.color3
+                            settings["color4"] = state.color4
+                            settings["sfx_volume"] = sound.sfx_volume
 
                             json.dump(settings, file, indent=4) #saveshit
                     except Exception as e:
@@ -506,7 +456,7 @@ with dpg.window(label="x4at", tag="main_window"):
             with dpg.child_window(tag="get_tab_content", width=-1, height=590, border=False):
                 pass
 
-            dpg.add_button(label="back", width=-1, height=20)
+            dpg.add_button(label="back to numpad", width=-1, height=20)
 
         def populate_get_tab(planet): #TODO: move this shit into another module
             
@@ -635,7 +585,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     with dpg.theme() as present_theme:
                         with dpg.theme_component(dpg.mvBarSeries):
                             dpg.add_theme_color(dpg.mvPlotCol_Fill,
-                                            color4+(100,),
+                                            state.color4+(100,),
                                             category=dpg.mvThemeCat_Plots)
                     dpg.bind_item_theme(series, present_theme)
 
@@ -679,11 +629,10 @@ with dpg.window(label="x4at", tag="main_window"):
         with dpg.tab(label="settings", tag="settings_tab"):
 
             def change_volume(app_data, sender):
-                global sfx_volume
 
-                play_sound(locally("sounds/scroll.wav"), sfx_volume, max_time=50)
+                sound.play_sound(locally("sounds/scroll.wav"), max_time=50)
 
-                sfx_volume = sender
+                sound.sfx_volume = sender
 
             dpg.add_slider_float(
                 label="sfx volume",
@@ -707,7 +656,7 @@ with dpg.window(label="x4at", tag="main_window"):
                             self.theme = make_theme(color1, color2, color3, color4)
 
                         def change_theme(self):
-                            play_sound(locally("sounds/click.wav"))
+                            sound.play_sound(locally("sounds/click.wav"))
                             set_theme(self.color1, self.color2, self.color3, self.color4)
 
                         def add(self):
@@ -721,7 +670,7 @@ with dpg.window(label="x4at", tag="main_window"):
             dpg.add_separator()
             
             def sales_demolition(sender, app_data):
-                play_sound(locally("sounds/click2.wav"))
+                sound.play_sound(locally("sounds/click2.wav"))
                 with dpg.window(label="kys bro", modal=True, no_close=True,
                                 no_resize=True, no_move=True,
                                 tag="thinking_window",
@@ -745,7 +694,7 @@ with dpg.window(tag="startup_window"):
     dpg.add_text("", tag="boot_text", wrap=600)
 
     #load image
-    load_pil_image("logo_texture", retroify(locally("other/logo.png")).resize((50, 50)))
+    imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png")).resize((50, 50)))
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image")
 
 def boot_sequence():
@@ -753,7 +702,7 @@ def boot_sequence():
         dpg.hide_item("startup_window")
         dpg.show_item("main_window")
         dpg.set_primary_window("main_window", True)
-        play_sound(locally("sounds/beep1.wav"), sfx_volume)
+        sound.play_sound(locally("sounds/beep1.wav"))
 
     boot_text = ""
     def add_boot_text(text):
@@ -768,7 +717,7 @@ def boot_sequence():
         border_thing = "-"*int((border_string_length-len(title)-(2 if title else 0))/2) #Hi
         add_boot_text(f"{border_thing}{f" {title} " if title else ""}{border_thing}")
         
-    play_sound(locally("sounds/startup.wav"), 0.3)
+    sound.play_sound(locally("sounds/startup.wav"), 0.3)
     add_boot_text(METATEXT)
     add_boot_text(f"v{VERSION}")
 
@@ -790,24 +739,24 @@ def boot_sequence():
                 }
 
     #sfx volume
-    global sfx_volume; sfx_volume = settings["sfx_volume"]; add_boot_text(f"sfx_volume: {sfx_volume}")
+    sound.sfx_volume = settings["sfx_volume"]; add_boot_text(f"sfx_volume: {sound.sfx_volume}")
 
     #theme colors
-    color1 = tuple(settings["color1"])
-    color2 = tuple(settings["color2"])
-    color3 = tuple(settings["color3"])
-    color4 = tuple(settings["color4"])
-    set_theme(color1, color2, color3, color4)
-    add_boot_text(f"color1: {color1}")
-    add_boot_text(f"color2: {color2}")
-    add_boot_text(f"color3: {color3}")
-    add_boot_text(f"color4: {color4}")
+    state.color1 = tuple(settings["color1"])
+    state.color2 = tuple(settings["color2"])
+    state.color3 = tuple(settings["color3"])
+    state.color4 = tuple(settings["color4"])
+    set_theme(state.color1, state.color2, state.color3, state.color4)
+    add_boot_text(f"color1: {state.color1}")
+    add_boot_text(f"color2: {state.color2}")
+    add_boot_text(f"color3: {state.color3}")
+    add_boot_text(f"color4: {state.color4}")
 
     dpg.delete_item("logo_image")
     dpg.delete_item("logo_texture")
     
-    load_pil_image("logo_texture", retroify(locally("other/logo.png"), color4).resize((50, 50)))
-
+    imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png"), state.color4).resize((50, 50)))
+    
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
     #debug shit
