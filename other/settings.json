@@ -1,10 +1,23 @@
 {
-    "color1": [0, 0, 0],
-    "color2": [40, 20, 5],
-    "color3": [84, 41, 9],
-    "color4": [250, 134, 55],
-    "sfx_volume": 1,
-    "debug_mode": true,
-
-    "boot_up_time_hang": 0.5
+    "color1": [
+        20,
+        35,
+        29
+    ],
+    "color2": [
+        85,
+        101,
+        81
+    ],
+    "color3": [
+        150,
+        167,
+        134
+    ],
+    "color4": [
+        215,
+        233,
+        186
+    ],
+    "sfx_volume": 1
 }

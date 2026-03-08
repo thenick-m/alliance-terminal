@@ -21,9 +21,10 @@ else:
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "0.0.1"
 
-WIDTH = 360
-HEIGHT = 700
+WIDTH = 363
+HEIGHT = 705
 
+debug = True
 
 #init global vars
 sfx_volume = 0.3
@@ -110,11 +111,7 @@ def switch_search_view(sender, app_data):
 
 
 #theme config
-def set_theme(
-    color1=(0, 0, 0),
-    color2=(40, 20, 5),
-    color3=(84, 41, 9),
-    color4=(250, 134, 55)):
+def make_theme(color1, color2, color3, color4):
     with dpg.theme() as crt_theme:
         with dpg.theme_component(dpg.mvAll):
             dpg.add_theme_style(dpg.mvStyleVar_WindowRounding, 0)
@@ -148,6 +145,20 @@ def set_theme(
             dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, color3)
             dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, color4)
             dpg.add_theme_color(dpg.mvThemeCol_ChildBg, color1)
+    return crt_theme
+
+def set_theme(
+    color1_set=(0, 0, 0),
+    color2_set=(40, 20, 5),
+    color3_set=(84, 41, 9),
+    color4_set=(250, 134, 55)):
+
+    global color1; color1 = color1_set
+    global color2; color2 = color2_set
+    global color3; color3 = color3_set
+    global color4; color4 = color4_set
+
+    crt_theme = make_theme(color1_set, color2_set, color3_set, color4_set)
 
     dpg.bind_theme(crt_theme)
 
@@ -304,7 +315,7 @@ with dpg.window(label="x4at", tag="main_window"):
                 complete_conditions.pop(complete_conditions.index(app_data))
                 dpg.configure_item("condition_list", items=complete_conditions)
 
-            def submit_conditions(sender, app_data):
+            def submit_conditions(sender, app_data): #TODO: move this shit into another module
                 global search_results_view
 
                 play_sound(locally("sounds/submit5.wav"), sfx_volume)
@@ -325,7 +336,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     play_sound(locally("sounds/reciept1.wav"), sfx_volume)
                     play_sound(locally("sounds/success.wav"), sfx_volume)
 
-                    dpg.set_value("loading_text", f"{len(results)} results {"(MAX)" if len(results) == 100 else ""}")
+                    dpg.set_value("loading_text", f"{len(results)} results {'(MAX)' if len(results) == 100 else ''}")
                     dpg.show_item("results_panel")
                     dpg.show_item("back_button")
                     dpg.delete_item("results_panel", children_only=True)
@@ -381,7 +392,7 @@ with dpg.window(label="x4at", tag="main_window"):
                 def do_search():
                     loading_sound = play_sound(locally("sounds/loading2.wav"), sfx_volume)
                     while not done[0]:
-                        dpg.set_value("loading_text", f"POLLING... {["/", "-", "\\", "|"][int((time.perf_counter()*4)%4)]}")
+                        dpg.set_value("loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                         time.sleep(0.1)
                     loading_sound.stop()
 
@@ -416,6 +427,46 @@ with dpg.window(label="x4at", tag="main_window"):
 
             #UI
             with dpg.group(parent="search_tab"):
+
+                def go_through_quit(sender, app_data):
+                    play_sound(locally("sounds/loading1.wav"))
+
+                    boot_text = ""
+                    def add_boot_text(text):
+                        nonlocal boot_text
+                        boot_text += f"{text}\n"
+
+                        time.sleep(random.uniform(0.05, 0.2))
+                        dpg.set_value("boot_text", boot_text)
+
+                    dpg.hide_item("main_window")
+                    dpg.show_item("startup_window")
+                    dpg.set_value("boot_text", "")
+
+                    #actually do stuff
+
+                    add_boot_text("saving settings...")
+                    
+                    try:
+                        with open(locally('other/settings.json'), 'w', encoding='utf-8') as file:
+                            settings = {}
+                            settings["color1"] = color1
+                            settings["color2"] = color2
+                            settings["color3"] = color3
+                            settings["color4"] = color4
+                            settings["sfx_volume"] = sfx_volume
+
+                            json.dump(settings, file, indent=4) #saveshit
+                    except Exception as e:
+                        add_boot_text(f"ERROR: {e}")
+
+                    add_boot_text("shutting down program...")
+                    time.sleep(0.5)
+                    dpg.stop_dearpygui()
+                    
+
+                dpg.add_button(tag="quit_button", label="quit", pos=(280, 10),
+                               callback=go_through_quit)
                 
                 dpg.add_text(tag="loading_text")
                 dpg.hide_item("loading_text")
@@ -452,10 +503,12 @@ with dpg.window(label="x4at", tag="main_window"):
                     
         # --- GET --- 
         with dpg.tab(label="get", tag="get_tab"):
-            with dpg.child_window(tag="get_tab_content", width=-1, height=-1, border=False):
-                dpg.add_text("No planet selected", tag="get_placeholder")
+            with dpg.child_window(tag="get_tab_content", width=-1, height=590, border=False):
+                pass
 
-        def populate_get_tab(planet):
+            dpg.add_button(label="back", width=-1, height=20)
+
+        def populate_get_tab(planet): #TODO: move this shit into another module
             
             dpg.delete_item("get_tab_content", children_only=True)
             
@@ -608,12 +661,15 @@ with dpg.window(label="x4at", tag="main_window"):
             else:
                     dpg.add_text(f"No resources logged", parent=resource_text_container)
 
-            # --- BOOLEAN RESOURCES ---
+            #deposits
             dpg.add_separator(parent="get_tab_content")
-            dpg.add_text("[ DEPOSITS ]", parent="get_tab_content")
-            bool_group = dpg.add_group(horizontal=True, parent="get_tab_content")
-            for key, val in deposit_resources.items():
-                dpg.add_text(f"[{key}: {val}", parent=bool_group)
+            deposit_container = dpg.add_child_window(parent="get_tab_content", height=60)
+            dpg.add_text("[ DEPOSITS ]", parent=deposit_container)
+            bool_group = dpg.add_group(parent=deposit_container)
+            if deposit_resources:
+                dpg.add_text("".join([f"{key}, " for key in deposit_resources.keys()]), parent=bool_group)
+            else:
+                dpg.add_text(f"None", parent=bool_group)
 
         # --- EDIT ---
         with dpg.tab(label="edit", tag="edit_tab"):
@@ -636,6 +692,33 @@ with dpg.window(label="x4at", tag="main_window"):
                 max_value=1,
                 callback=change_volume
                 )
+            
+            dpg.add_separator()
+            with dpg.child_window(horizontal_scrollbar=True, width=-1, height=100):
+                dpg.add_text("[ THEMES ]")
+                with dpg.group(horizontal=True):
+                    class ColorProfile:
+                        def __init__(self, name, color1, color2, color3, color4):
+                            self.name = name
+                            self.color1 = color1
+                            self.color2 = color2
+                            self.color3 = color3
+                            self.color4 = color4
+                            self.theme = make_theme(color1, color2, color3, color4)
+
+                        def change_theme(self):
+                            play_sound(locally("sounds/click.wav"))
+                            set_theme(self.color1, self.color2, self.color3, self.color4)
+
+                        def add(self):
+                            button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda sender, app_data: self.change_theme())
+                            dpg.bind_item_theme(button, self.theme)
+
+
+                    ColorProfile("phosphor", (0, 0, 0), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
+                    ColorProfile("byte", (20, 35, 29), (85, 101, 81), (150, 167, 134), (215, 233, 186)).add()
+
+            dpg.add_separator()
             
             def sales_demolition(sender, app_data):
                 play_sound(locally("sounds/click2.wav"))
@@ -691,8 +774,20 @@ def boot_sequence():
 
     #settings stuff
     add_boot_border("LOADING SETTINGS")
-    with open(locally('other/settings.json'), 'r', encoding='utf-8') as file:
-        settings = json.load(file)
+    try:
+        with open(locally('other/settings.json'), 'r', encoding='utf-8') as file:
+            settings = json.load(file)
+    except json.decoder.JSONDecodeError:
+        add_boot_text("ERROR: settings file corrupted")
+        add_boot_text("loading with default settings...")
+
+        settings = {
+            "color1": [0, 0, 0],
+            "color2": [40, 20, 5],
+            "color3": [84, 41, 9],
+            "color4": [250, 134, 55],
+            "sfx_volume": 1,
+                }
 
     #sfx volume
     global sfx_volume; sfx_volume = settings["sfx_volume"]; add_boot_text(f"sfx_volume: {sfx_volume}")
@@ -716,7 +811,7 @@ def boot_sequence():
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
     #debug shit
-    if settings["debug_mode"]: end_boot_sequence(); return
+    if debug: end_boot_sequence(); return
 
     #server connection stuff
     add_boot_border(f"SERVER CONNECTION")
@@ -747,7 +842,7 @@ def boot_sequence():
     add_boot_text("starting main window...")
     time.sleep(0.1)
     
-    time.sleep(settings["boot_up_time_hang"])
+    time.sleep(0.5)
     end_boot_sequence()
     
 
