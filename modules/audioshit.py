@@ -1,6 +1,7 @@
 #sfx manager
 from pygame import mixer
-sfx_volume = 0.3
+
+sfx_volume = 1
 
 sfx = {}
 
