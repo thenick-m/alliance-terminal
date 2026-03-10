@@ -5,8 +5,11 @@ sfx_volume = 1
 
 sfx = {}
 
-def play_sound(filename, volume=sfx_volume, max_time=None):
+def play_sound(filename, volume=None, max_time=None):
     global sfx
+
+    if volume == None:
+        volume = sfx_volume
 
     if filename in sfx.keys():
         sound = sfx[filename]
