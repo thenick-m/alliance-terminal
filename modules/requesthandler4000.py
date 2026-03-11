@@ -1,10 +1,13 @@
 #requesthandler4000.py
+
+import discord_auth
 import requests
 import uuid
 import time
 
 BASE_URL = "https://x4alliancebackend-default-rtdb.firebaseio.com"
 CLIENT_ID = str(uuid.uuid4()) #id used to identify user in current session
+discord_token = None
 
 polls = 5
 
@@ -13,12 +16,18 @@ def request(command:str="", args:dict={}):
 
     print(f"sending {command} request with id: {req_id}")
 
-    requests.put(f"{BASE_URL}/requests/{req_id}.json", json={
+    payload = {
         "command": command,
         "args": args,
         "id": CLIENT_ID,
-        "status": "pending"
-    })
+        "status": "pending" 
+    }
+
+    #editor auth
+    if discord_token:
+        payload["discord_token"] = discord_token
+
+    requests.put(f"{BASE_URL}/requests/{req_id}.json", json=payload) #send it out
 
     print(f"beginning polling for: {req_id}")
 
@@ -30,6 +39,22 @@ def request(command:str="", args:dict={}):
     else:
         print(f"timed out")
         return None
+    
+def editor_login():
+    global discord_token
+    code = discord_auth.login()
+    if not code:
+        print("login failed")
+        return
+    
+    #server exchanges the code and returns a token
+    result = request("discord_login", {"code": code})
+    if "token" in result:
+        discord_token = result["token"]
+        print("editor mode enabled")
+
+def editor_check():
+    return request("discord_login_check")
 
 def ping():
     return request("ping")
@@ -41,6 +66,9 @@ def get(planetID:str):
     return request("get", {"planetID": planetID})
 
 def count(stringSearchArg:str):
-    return request()
+    return request("count", {"stringSearchArg": stringSearchArg})
 
-#print(search("(malachite = present)")) #testing
+
+#testing
+#editor_login()
+#print(editor_check())
