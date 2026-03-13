@@ -229,7 +229,7 @@ def get():
         else:
             return
 
-        def do_search():
+        def do_get():
             dpg.hide_item("numpad")
             dpg.show_item("loading_text_get")
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
@@ -263,7 +263,7 @@ def get():
             dpg.show_item("back_get")
                 
 
-        threading.Thread(target=do_search, daemon=True).start()
+        threading.Thread(target=do_get, daemon=True).start()
         run_async(lambda: rq.get(index), on_complete)
 
         

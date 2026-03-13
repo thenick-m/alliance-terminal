@@ -12,7 +12,7 @@ from modules import audioshit as sound
 from modules import imagehelpers
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "0.0.1"
+VERSION = "0.1.0"
 
 debug = True
 
@@ -173,96 +173,12 @@ with dpg.window(label="x4at", tag="main_window"):
 
         # --- EDIT ---
         with dpg.tab(label="edit", tag="edit_tab"):
-            def login():
-                sound.play_sound(locally("sounds/click2.wav"))
-                loading_sound = sound.play_sound(locally("sounds/startup3.wav"))
-
-                with dpg.window(label="log in", modal=True, no_close=True,
-                                no_resize=True, no_move=True,
-                                tag="discord_thinking_window",
-                                pos=(WIDTH//2 - 90, WIDTH//2 - 30),
-                                min_size=(150, 150),
-                                max_size=(150, 150)):
-                    dpg.add_text("Verify through discord on your web browser to confirm your enrollment.",
-                                 tag="login_loading_text",
-                                 wrap=150)
-
-                def do_login():
-                    counter = 0
-                    while not done[0] and counter < 30:
-                        time.sleep(0.1)
-                        counter += 0.1
-                    loading_sound.stop()
-                    
-
-                done = [False]
-
-                def on_complete(result):
-                    done[0] = True
-
-                    def set_text(text):
-                        dpg.set_value("login_loading_text", text)
-
-                    if result == None:
-                        set_text("ERROR: couldn't contact server")
-                    elif result == False:
-                        set_text("ERROR: login failed")
-                    elif 'error' in result.keys():
-                        set_text(f"ERROR: {result['error']}")
-                    elif not result['is_editor']:
-                        set_text("ERROR: you are not enrolled")
-                    else:
-                        print(result)
-                        set_text(f"Welcome, {result["username"]}")
-                        sound.play_sound(locally("sounds/shutdown.wav"))
-                        sound.play_sound(locally("sounds/welcome.wav"))
-
-                        time.sleep(1.2)
-                        sound.play_sound(locally("sounds/fractal_block_world_welcome.wav"))
-
-                        time.sleep(3)
-
-                        dpg.delete_item("discord_thinking_window")
-                        dpg.hide_item("login_button")
-                        return
-                    
-                    sound.play_sound(locally("sounds/error.wav"))
-                    sound.play_sound(locally("sounds/error2.wav"))
-                    sound.play_sound(locally("sounds/shutdown.wav"))
-
-                    time.sleep(3)
-
-                    dpg.delete_item("discord_thinking_window")                       
-
-                threading.Thread(target=do_login, daemon=True).start()
-                run_async(lambda: rq.editor_login(), on_complete)
-
-            dpg.add_button(label="log in through discord", tag="login_button", width=-1, height=100, callback=login)
-            with dpg.child_window(width=-1, height=-1):
-                dpg.add_button(label="refresh", )
+            from tabs.edit import edit
+            edit()
 
         # --- SETTINGS --- 
         with dpg.tab(label="settings", tag="settings_tab"):
-
-            def toggle_noise(sender, app_data):
-                state.noise = not state.noise
-
-            dpg.add_checkbox(label="noise", callback=toggle_noise, default_value=state.noise)
-            def change_volume(sender, app_data):
-
-                sound.play_sound(locally("sounds/scroll.wav"), max_time=50)
-
-                sound.sfx_volume = app_data
-
-            dpg.add_slider_float(
-                label="sfx volume",
-                default_value=1,
-                min_value=0,
-                max_value=1,
-                callback=change_volume
-                )
             
-            dpg.add_separator()
             with dpg.child_window(horizontal_scrollbar=True, width=-1, height=150):
                 dpg.add_text("[ THEMES ]")
                 with dpg.group(horizontal=True):
@@ -291,6 +207,27 @@ with dpg.window(label="x4at", tag="main_window"):
 
 
             dpg.add_separator()
+
+            def change_volume(sender, app_data):
+
+                sound.play_sound(locally("sounds/scroll.wav"), max_time=50)
+
+                sound.sfx_volume = app_data
+
+            dpg.add_slider_float(
+                label="sfx volume",
+                default_value=1,
+                min_value=0,
+                max_value=1,
+                callback=change_volume
+                )
+            
+            def toggle_noise(sender, app_data):
+                state.noise = not state.noise
+
+            dpg.add_separator()
+
+            dpg.add_checkbox(label="noise", callback=toggle_noise, default_value=state.noise)
             
             def sales_demolition(sender, app_data):
                 sound.play_sound(locally("sounds/click2.wav"))
@@ -307,6 +244,8 @@ with dpg.window(label="x4at", tag="main_window"):
                         time.sleep(0.1)
 
                 threading.Thread(target=bro_thinking, daemon=True).start()
+
+            dpg.add_separator()
 
             dpg.add_button(label="recompute base encryption hash key", callback=sales_demolition)
 

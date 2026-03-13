@@ -1,18 +1,20 @@
 #requesthandler4000.py
 
-from modules import discord_auth as discord_auth
+from modules import discord_auth
 from modules import state
 import requests
 import uuid
 import time
 
+#testing
+#import discord_auth
+
 BASE_URL = "https://x4alliancebackend-default-rtdb.firebaseio.com"
 CLIENT_ID = str(uuid.uuid4()) #id used to identify user in current session
 discord_token = None
 
-polls = 5
 
-def request(command:str="", args:dict={}):
+def request(command:str="", args:dict={}, polls=5):
     req_id = str(uuid.uuid4()) #id used to identify request
 
     print(f"sending {command} request with id: {req_id}")
@@ -60,6 +62,7 @@ def editor_login():
 
 def edit():
     return request("edit", {})
+
 def ping():
     return request("ping")
 
@@ -72,7 +75,5 @@ def get(planetID:str):
 def count(stringSearchArg:str):
     return request("count", {"stringSearchArg": stringSearchArg})
 
-
-#testing
-#editor_login()
-#print(editor_check())
+def leaderboard():
+    return request("leaderboard")
