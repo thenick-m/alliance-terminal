@@ -1,4 +1,3 @@
-#does all the stuff in the get tab
 from dearpygui import dearpygui as dpg
 import time
 import threading
@@ -239,6 +238,7 @@ def get():
                 time.sleep(0.1)
             loading_sound.stop()
             sound.play_sound(locally("sounds/receipt.wav"))
+            sound.play_sound(locally("sounds/success.wav"))
 
         done = [False]
 

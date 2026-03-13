@@ -1,6 +1,7 @@
 #requesthandler4000.py
 
-import discord_auth
+from modules import discord_auth as discord_auth
+from modules import state
 import requests
 import uuid
 import time
@@ -45,12 +46,14 @@ def editor_login():
     code = discord_auth.login()
     if not code:
         print("login failed")
-        return
+        return False
     
     #server exchanges the code and returns a token
     result = request("discord_login", {"code": code})
     if "token" in result:
         discord_token = result["token"]
+
+        state.editor_mode = True
         print("editor mode enabled")
 
 def editor_check():

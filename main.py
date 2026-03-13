@@ -56,7 +56,7 @@ def make_theme(color1, color2, color3, color4):
     return crt_theme
 
 def set_theme(
-    color1_set=(0, 0, 0),
+    color1_set=(10, 10, 10),
     color2_set=(40, 20, 5),
     color3_set=(84, 41, 9),
     color4_set=(250, 134, 55)
@@ -66,6 +66,7 @@ def set_theme(
     state.color2 = color2_set
     state.color3 = color3_set
     state.color4 = color4_set
+    imagehelpers.tint = color4_set
 
     crt_theme = make_theme(color1_set, color2_set, color3_set, color4_set)
 
@@ -88,6 +89,12 @@ with dpg.font_registry():
         pass
     with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
         state.big_font = big_font
+
+#texture config mainly for noise shit
+with dpg.texture_registry():
+    initial = imagehelpers.generate_noise(WIDTH, HEIGHT).convert("RGBA")
+    data = [x/255.0 for x in initial.tobytes()]
+    dpg.add_dynamic_texture(WIDTH, HEIGHT, data, tag="noise_texture")
 
 dpg.bind_font(default_font)
 
@@ -121,6 +128,7 @@ with dpg.window(label="x4at", tag="main_window"):
             settings["color3"] = state.color3
             settings["color4"] = state.color4
             settings["sfx_volume"] = sound.sfx_volume
+            settings["noise"] = state.noise
 
             json.dump(settings, file, indent=4) #saveshit
 
@@ -165,11 +173,25 @@ with dpg.window(label="x4at", tag="main_window"):
 
         # --- EDIT ---
         with dpg.tab(label="edit", tag="edit_tab"):
-            dpg.add_text("TBA")
+            def login():
+                sound.play_sound(locally("sounds/click2.wav"))
+                with dpg.window(label="log in", modal=True, no_close=True,
+                                no_resize=True, no_move=True,
+                                tag="thinking_window",
+                                pos=(WIDTH//2 - 80, WIDTH//2 - 30)):
+                    dpg.add_text("Log in through discord on your web browser to verify your enrollment.", tag="thinking_text")
+
+                rq.editor_login()   
+
+            dpg.add_button(label="log in through discord", width=-1, height=100, callback=login)
 
         # --- SETTINGS --- 
         with dpg.tab(label="settings", tag="settings_tab"):
 
+            def toggle_noise(sender, app_data):
+                state.noise = not state.noise
+
+            dpg.add_checkbox(label="noise", callback=toggle_noise, default_value=state.noise)
             def change_volume(sender, app_data):
 
                 sound.play_sound(locally("sounds/scroll.wav"), max_time=50)
@@ -188,7 +210,7 @@ with dpg.window(label="x4at", tag="main_window"):
             with dpg.child_window(horizontal_scrollbar=True, width=-1, height=150):
                 dpg.add_text("[ THEMES ]")
                 with dpg.group(horizontal=True):
-                    class ColorProfile:
+                    class Theme:
                         def __init__(self, name, color1, color2, color3, color4):
                             self.name = name
                             self.color1 = color1
@@ -206,10 +228,10 @@ with dpg.window(label="x4at", tag="main_window"):
                             dpg.bind_item_theme(button, self.theme)
 
 
-                    ColorProfile("phosphor", (0, 0, 0), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
-                    ColorProfile("byte", (20, 35, 29), (85, 101, 81), (150, 167, 134), (215, 233, 186)).add()
-                    ColorProfile("girly girl", (54, 42, 53), (112, 89, 110), (161, 127, 158), (255, 183, 197)).add()
-                    ColorProfile("manly man", (10, 10, 13), (75, 75, 94), (139, 139, 174), (204, 204, 255)).add()
+                    Theme("phosphor", (10, 10, 10), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
+                    Theme("byte", (20, 35, 29), (85, 101, 81), (150, 167, 134), (215, 233, 186)).add()
+                    Theme("girly girl", (54, 42, 53), (112, 89, 110), (161, 127, 158), (255, 183, 197)).add()
+                    Theme("manly man", (10, 10, 13), (75, 75, 94), (139, 139, 174), (204, 204, 255)).add()
 
 
             dpg.add_separator()
@@ -266,7 +288,7 @@ def boot_sequence():
     add_boot_text(METATEXT)
     add_boot_text(f"v{VERSION}")
 
-    #settings stuff
+    #LOAD SETTINGS
     add_boot_border("LOADING SETTINGS")
     try:
         with open(savepath('other/settings.json'), 'r', encoding='utf-8') as file:
@@ -278,11 +300,12 @@ def boot_sequence():
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             add_boot_text("loading with default settings...")
             settings = {
-                "color1": [0, 0, 0],
+                "color1": [10, 10, 10],
                 "color2": [40, 20, 5],
                 "color3": [84, 41, 9],
                 "color4": [250, 134, 55],
                 "sfx_volume": 1,
+                "noise": True
             }
 
     #sfx volume
@@ -293,6 +316,7 @@ def boot_sequence():
     state.color2 = tuple(settings["color2"])
     state.color3 = tuple(settings["color3"])
     state.color4 = tuple(settings["color4"])
+    state.noise = settings["noise"]
     set_theme(state.color1, state.color2, state.color3, state.color4)
     add_boot_text(f"color1: {state.color1}")
     add_boot_text(f"color2: {state.color2}")
@@ -302,7 +326,8 @@ def boot_sequence():
     dpg.delete_item("logo_image")
     dpg.delete_item("logo_texture")
     
-    imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png"), state.color4).resize((50, 50)))
+    imagehelpers.tint = state.color4
+    imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png")).resize((50, 50)))
     
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
@@ -348,6 +373,24 @@ dpg.create_viewport(title="x4AllianceTerminal",
                     width=WIDTH, height=WIDTH,
                     x_pos=1500, 
                     always_on_top=True)
+
+#more noise shit
+def animate_noise():
+    while True:
+        if state.noise:
+            img = (imagehelpers.generate_noise(WIDTH, HEIGHT))
+            data = [x/255.0 for x in img.convert("RGBA").tobytes()]
+            dpg.set_value("noise_texture", data)
+        else:
+            dpg.set_value("noise_texture", [0.0] * (WIDTH * HEIGHT * 4))
+        time.sleep(0.25)
+
+with dpg.viewport_drawlist(front=True):
+    dpg.draw_image("noise_texture", (0, 0), (WIDTH, HEIGHT))
+
+#start noise
+threading.Thread(target=animate_noise, daemon=True).start()
+
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.set_primary_window("startup_window", True)

@@ -35,4 +35,4 @@ def login() -> str | None:
     server = HTTPServer(("localhost", 8765), OAuthHandler)
     server.handle_request()
 
-    return auth_code  # just return the code, nothing else
+    return auth_code 
