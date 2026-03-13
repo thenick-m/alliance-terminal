@@ -50,15 +50,16 @@ def editor_login():
     
     #server exchanges the code and returns a token
     result = request("discord_login", {"code": code})
-    if "token" in result:
+    if result["is_editor"]:
         discord_token = result["token"]
 
         state.editor_mode = True
         print("editor mode enabled")
 
-def editor_check():
-    return request("discord_login_check")
+    return result
 
+def edit():
+    return request("edit", {})
 def ping():
     return request("ping")
 
