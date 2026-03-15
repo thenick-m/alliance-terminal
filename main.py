@@ -12,7 +12,7 @@ from modules import audioshit as sound
 from modules import imagehelpers
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "0.1.0"
+VERSION = "0.1.5"
 
 debug = True
 
@@ -56,7 +56,7 @@ def make_theme(color1, color2, color3, color4):
     return crt_theme
 
 def set_theme(
-    color1_set=(10, 10, 10),
+    color1_set=(20, 13, 8),
     color2_set=(40, 20, 5),
     color3_set=(84, 41, 9),
     color4_set=(250, 134, 55)
@@ -66,7 +66,6 @@ def set_theme(
     state.color2 = color2_set
     state.color3 = color3_set
     state.color4 = color4_set
-    imagehelpers.tint = color4_set
 
     crt_theme = make_theme(color1_set, color2_set, color3_set, color4_set)
 
@@ -92,7 +91,7 @@ with dpg.font_registry():
 
 #texture config mainly for noise shit
 with dpg.texture_registry():
-    initial = imagehelpers.generate_noise(WIDTH, HEIGHT).convert("RGBA")
+    initial = imagehelpers.generate_retro_boi(WIDTH, HEIGHT).convert("RGBA")
     data = [x/255.0 for x in initial.tobytes()]
     dpg.add_dynamic_texture(WIDTH, HEIGHT, data, tag="noise_texture")
 
@@ -200,8 +199,9 @@ with dpg.window(label="x4at", tag="main_window"):
                             dpg.bind_item_theme(button, self.theme)
 
 
-                    Theme("phosphor", (10, 10, 10), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
+                    Theme("phosphor", (20, 13, 8), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
                     Theme("byte", (20, 35, 29), (85, 101, 81), (150, 167, 134), (215, 233, 186)).add()
+                    Theme("senno", (36, 19, 23), (75, 34, 34), (149, 68, 67), (224, 102, 101)).add()
                     Theme("girly girl", (54, 42, 53), (112, 89, 110), (161, 127, 158), (255, 183, 197)).add()
                     Theme("manly man", (10, 10, 13), (75, 75, 94), (139, 139, 174), (204, 204, 255)).add()
 
@@ -227,7 +227,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_separator()
 
-            dpg.add_checkbox(label="noise", callback=toggle_noise, default_value=state.noise)
+            dpg.add_checkbox(label="retroboi", callback=toggle_noise, default_value=state.noise)
             
             def sales_demolition(sender, app_data):
                 sound.play_sound(locally("sounds/click2.wav"))
@@ -295,7 +295,7 @@ def boot_sequence():
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             add_boot_text("loading with default settings...")
             settings = {
-                "color1": [10, 10, 10],
+                "color1": [20, 13, 8],
                 "color2": [40, 20, 5],
                 "color3": [84, 41, 9],
                 "color4": [250, 134, 55],
@@ -321,7 +321,6 @@ def boot_sequence():
     dpg.delete_item("logo_image")
     dpg.delete_item("logo_texture")
     
-    imagehelpers.tint = state.color4
     imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png")).resize((50, 50)))
     
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
@@ -367,13 +366,17 @@ dpg.create_viewport(title="x4AllianceTerminal",
                     large_icon=locally("other/logo.ico"), 
                     width=WIDTH, height=WIDTH,
                     x_pos=1500, 
-                    always_on_top=True)
+                    always_on_top=True,
+                    min_width=WIDTH,
+                    max_width=WIDTH,
+                    min_height=WIDTH,
+                    max_height=HEIGHT) #no fullscreen no fullscreen NO FULLSCREEN NO FUCKING FULLSCREEN
 
 #more noise shit
 def animate_noise():
     while True:
         if state.noise:
-            img = (imagehelpers.generate_noise(WIDTH, HEIGHT))
+            img = (imagehelpers.generate_retro_boi(WIDTH, HEIGHT))
             data = [x/255.0 for x in img.convert("RGBA").tobytes()]
             dpg.set_value("noise_texture", data)
         else:
