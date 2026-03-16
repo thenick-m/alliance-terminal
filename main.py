@@ -90,13 +90,13 @@ with dpg.font_registry():
     with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
         state.big_font = big_font
 
+dpg.bind_font(default_font)
+
 #texture config mainly for noise shit
 with dpg.texture_registry():
     initial = imagehelpers.generate_noise(WIDTH, HEIGHT).convert("RGBA")
     data = [x/255.0 for x in initial.tobytes()]
     dpg.add_dynamic_texture(WIDTH, HEIGHT, data, tag="noise_texture")
-
-dpg.bind_font(default_font)
 
 
 # --- MAIN WINDOW ---
@@ -160,6 +160,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
     
     with dpg.tab_bar(tag="tab_bar", callback=on_tab_switch):
+        #modularized tabs into their own py file in v0.1.0
 
         # --- SEARCH ---
         with dpg.tab(label="search", tag="search_tab"):
