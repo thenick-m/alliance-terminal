@@ -61,6 +61,8 @@ def edit():
                 dpg.delete_item("discord_thinking_window")
                 dpg.hide_item("login_button")
 
+                dpg.show_item("numpad_edit")
+
                 dpg.add_text(tag="editor_flash", label="EDITOR MODE", pos=(WIDTH//2-50, WIDTH//2-37), parent="main_window")
                 for _ in range(3):
                     dpg.set_value("editor_flash", "EDITOR MODE")
@@ -81,8 +83,6 @@ def edit():
 
         threading.Thread(target=do_login, daemon=True).start()
         run_async(lambda: rq.editor_login(), on_complete)
-
-    dpg.add_button(label="log in through discord", tag="login_button", width=-1, height=100, callback=login)
 
     def update_leaderboard(sender, app_data):
         sound.play_sound(locally("sounds/click2.wav"))
@@ -130,6 +130,51 @@ def edit():
 
         threading.Thread(target=do_update, daemon=True).start()
         run_async(lambda: rq.leaderboard(), on_complete)
+
+    current = ""
+    def numpad_press(sender, app_data):
+        sound.play_sound(locally("sounds/click3.wav"))
+        nonlocal current
+
+        key = sender[:-5] #chop off the end
+        if key == "AC":
+            sound.play_sound(locally("sounds/clear.wav"))
+            dpg.set_value("index_input", "")
+            current = ""
+        else:
+            dpg.set_value("index_input", current + key)
+            current = current + key
+
+    #UI
+
+    dpg.add_button(label="log in through discord", tag="login_button", width=-1, height=100, callback=login)
+
+    #only show after login
+    with dpg.child_window(tag="numpad_edit", width=-1, height=230):
+        dpg.add_input_text(tag="index_input", hint="index", width=-1)
+
+        with dpg.group(horizontal=True):
+
+            with dpg.group():
+                with dpg.group(horizontal=True):
+                    for num in ["7","8","9"]:
+                        dpg.add_button(tag=f"{num}_edit", label=num, width=55, height=44,
+                                    callback=numpad_press)
+                with dpg.group(horizontal=True):
+                    for num in ["4","5","6"]:
+                        dpg.add_button(tag=f"{num}_edit", label=num, width=55, height=44,
+                                    callback=numpad_press)
+                with dpg.group(horizontal=True):
+                    for num in ["1","2","3"]:
+                        dpg.add_button(tag=f"{num}_edit", label=num, width=55, height=44,
+                                    callback=numpad_press)
+                with dpg.group(horizontal=True):
+                    for num in ["-","0","AC"]:
+                        dpg.add_button(tag=f"{num}_edit", label=num, width=55, height=44,
+                                    callback=numpad_press)
+            
+            dpg.add_button(label="edit", width=-1, height=-1, callback=lambda: print("hi"))
+    dpg.hide_item("numpad_edit")
 
     with dpg.child_window(width=-1, height=-1, tag="leaderboard_window"):
         dpg.add_text("[ LEADERBOARD ]")

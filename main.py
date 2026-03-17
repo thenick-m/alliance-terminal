@@ -154,6 +154,9 @@ with dpg.window(label="x4at", tag="main_window"):
             else:
                 dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
 
+        elif tab == "edit_tab":
+            dpg.configure_viewport(0, width=WIDTH, height=HEIGHT)
+
         elif tab == "settings_tab":
             dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
 
