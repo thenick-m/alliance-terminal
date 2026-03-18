@@ -14,7 +14,6 @@ from modules import imagehelpers
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "0.1.5"
 
-debug = True
 
 def make_theme(color1, color2, color3, color4):
     with dpg.theme() as crt_theme:
@@ -208,6 +207,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     Theme("senno", (36, 19, 23), (75, 34, 34), (149, 68, 67), (224, 102, 101)).add()
                     Theme("girly girl", (54, 42, 53), (112, 89, 110), (161, 127, 158), (255, 183, 197)).add()
                     Theme("manly man", (10, 10, 13), (75, 75, 94), (139, 139, 174), (204, 204, 255)).add()
+                    Theme("emo bart", (22, 22, 22), (129, 129, 129), (27, 20, 35), (237, 237, 237)).add()
 
 
             dpg.add_separator()
@@ -330,7 +330,7 @@ def boot_sequence():
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
     #debug shit
-    if debug: end_boot_sequence(); return
+    if state.debug: end_boot_sequence(); return
 
     #server connection stuff
     add_boot_border(f"SERVER CONNECTION")

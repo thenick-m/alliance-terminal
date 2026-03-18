@@ -53,23 +53,15 @@ def edit():
                 sound.play_sound(locally("sounds/shutdown.wav"))
                 sound.play_sound(locally("sounds/welcome.wav"))
 
-                time.sleep(1.2)
+                time.sleep(0 if state.debug else 1.2)
                 sound.play_sound(locally("sounds/fractal_block_world_welcome.wav"))
 
-                time.sleep(3)
+                time.sleep(0 if state.debug else 3)
 
                 dpg.delete_item("discord_thinking_window")
                 dpg.hide_item("login_button")
 
                 dpg.show_item("numpad_edit")
-
-                dpg.add_text(tag="editor_flash", label="EDITOR MODE", pos=(WIDTH//2-50, WIDTH//2-37), parent="main_window")
-                for _ in range(3):
-                    dpg.set_value("editor_flash", "EDITOR MODE")
-                    time.sleep(1)
-                    dpg.set_value("editor_flash", "")
-                    time.sleep(1)
-
 
                 return
             
@@ -82,7 +74,14 @@ def edit():
             dpg.hide_item("discord_thinking_window")                       
 
         threading.Thread(target=do_login, daemon=True).start()
-        run_async(lambda: rq.editor_login(), on_complete)
+
+        if state.debug:
+            on_complete({
+                "is_editor": True,
+                "username": "debug_mode"
+                })
+        else:
+            run_async(lambda: rq.editor_login(), on_complete)
 
     def update_leaderboard(sender, app_data):
         sound.play_sound(locally("sounds/click2.wav"))
@@ -131,6 +130,45 @@ def edit():
         threading.Thread(target=do_update, daemon=True).start()
         run_async(lambda: rq.leaderboard(), on_complete)
 
+    #EDIT SHIT
+
+    def switch_edit_view():
+        if state.current_edit_planet: 
+            dpg.hide_item("leaderboard_window")
+            dpg.hide_item("numpad_edit")
+            dpg.hide_item("loading_text_edit")
+
+            dpg.show_item("edit_window")
+            dpg.show_item("back_edit")
+            dpg.show_item("submit_edit")
+        else: #numpad & leaderboard
+            dpg.hide_item("edit_window")
+            dpg.hide_item("back_edit")
+            dpg.hide_item("loading_text_edit")
+            dpg.hide_item("submit_edit")
+
+            dpg.show_item("leaderboard_window")
+            dpg.show_item("numpad_edit")
+
+    def back_to_numpad():
+        sound.play_sound(locally("sounds/submit4.wav"))
+        state.current_edit_planet = None
+        switch_edit_view()
+
+    def populate_edit_tab(planet):
+        state.current_edit_planet = planet
+
+        #clear edit_fields
+        dpg.delete_item("edit_fields", children_only=True)
+
+        #fill edit_fields
+        for field, result in planet.items():
+            with dpg.child_window(parent="edit_fields", width=-1, height=30):
+                dpg.add_text(field)
+                dpg.set_value(dpg.add_input_text(hint="any", width=-1, pos=(100, 5)), result)
+
+
+
     current = ""
     def numpad_press(sender, app_data):
         sound.play_sound(locally("sounds/click3.wav"))
@@ -145,8 +183,55 @@ def edit():
             dpg.set_value("index_input", current + key)
             current = current + key
 
-    #UI
+    def submit_edit(sender, app_data):
+        sound.play_sound(locally("sounds/submit5.wav"))
 
+        index = dpg.get_value("index_input")
+
+        if index:
+            index = index.strip()
+        else:
+            return
+
+        def do_edit():
+            dpg.hide_item("numpad_edit")
+            dpg.hide_item("leaderboard_window")
+            dpg.show_item("loading_text_edit")
+            loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
+            while not done[0]:
+                dpg.set_value("loading_text_edit", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                time.sleep(0.1)
+            loading_sound.stop()
+            sound.play_sound(locally("sounds/receipt.wav"))
+            sound.play_sound(locally("sounds/success.wav"))
+
+        done = [False]
+
+        def on_complete(result):
+            done[0] = True
+
+            def set_text(text):
+                dpg.set_value("loading_text_edit", text)
+
+            if result == None:
+                set_text("ERROR: couldn't contact server")
+            elif 'error' in result.keys():
+                set_text(f"ERROR: {result['error']}")
+            else:
+                populate_edit_tab(result['planet'])
+                switch_edit_view()
+                dpg.hide_item("loading_text_edit")
+                return
+            
+            sound.play_sound(locally("sounds/error.wav"))
+            sound.play_sound(locally("sounds/error2.wav"))
+            dpg.show_item("back_edit")
+                
+
+        threading.Thread(target=do_edit, daemon=True).start()
+        run_async(lambda: rq.get(index), on_complete)
+
+    #UI
     dpg.add_button(label="log in through discord", tag="login_button", width=-1, height=100, callback=login)
 
     #only show after login
@@ -173,8 +258,23 @@ def edit():
                         dpg.add_button(tag=f"{num}_edit", label=num, width=55, height=44,
                                     callback=numpad_press)
             
-            dpg.add_button(label="edit", width=-1, height=-1, callback=lambda: print("hi"))
+            dpg.add_button(label="edit", width=-1, height=-1, callback=submit_edit)
     dpg.hide_item("numpad_edit")
+
+    #actual edit child window
+    dpg.hide_item(dpg.add_text(tag="loading_text_edit")) #loading text
+    with dpg.child_window(width=-1, height=-1, tag="edit_window", border=False):
+        dpg.add_button(label="+ add field +", width=-1, height=20)
+        with dpg.child_window(width=-1, height=500, tag="edit_fields"):
+            pass #populate_edit_tab fills this shit later
+
+        #bottom
+        with dpg.child_window():
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="back", width=WIDTH//2-10, height=-1, tag="back_edit", callback=back_to_numpad)
+                dpg.add_button(label="submit edit", width=-1, height=-1, tag="submit_edit")
+
+    dpg.hide_item("edit_window")
 
     with dpg.child_window(width=-1, height=-1, tag="leaderboard_window"):
         dpg.add_text("[ LEADERBOARD ]")

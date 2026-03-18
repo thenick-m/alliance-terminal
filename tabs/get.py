@@ -298,7 +298,7 @@ def get():
     #make button for returning to numpad
     def back_to_numpad():
         sound.play_sound(locally("sounds/submit4.wav"))
-        state.current_get_planet = None  # clear state HERE, not in switch
+        state.current_get_planet = None
         switch_get_view()
 
     dpg.hide_item(dpg.add_button(tag="back_get", label="back to numpad", width=-1, height=20, callback=back_to_numpad))
