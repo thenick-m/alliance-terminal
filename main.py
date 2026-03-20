@@ -1,7 +1,6 @@
 from dearpygui import dearpygui as dpg
 import time
 import threading
-from pygame import mixer
 import random
 import json
 
@@ -78,9 +77,6 @@ dpg.create_context()
 #set theme
 set_theme()
 
-#start sound stuff
-mixer.init()
-
 #font config
 with dpg.font_registry():
     with dpg.font(locally("other/fixedsys.ttf"), 14) as default_font:
@@ -138,6 +134,8 @@ with dpg.window(label="x4at", tag="main_window"):
 
     def on_tab_switch(sender, app_data):
         sound.play_sound(locally("sounds/click.wav"))
+        sound.play_sound(locally("sounds/switch.wav"))
+        imagehelpers.channel_switch()
 
         tab = dpg.get_item_alias(app_data) #this is supposed to unfuck it since dpg app_data sends as dpg id 
 
@@ -208,6 +206,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     Theme("girly girl", (54, 42, 53), (112, 89, 110), (161, 127, 158), (255, 183, 197)).add()
                     Theme("manly man", (10, 10, 13), (75, 75, 94), (139, 139, 174), (204, 204, 255)).add()
                     Theme("emo bart", (22, 22, 22), (129, 129, 129), (27, 20, 35), (237, 237, 237)).add()
+                    Theme("cynax", (1, 4, 33), (32, 49, 107), (63, 94, 181), (94, 139, 255)).add()
 
 
             dpg.add_separator()
@@ -316,11 +315,13 @@ def boot_sequence():
     state.color3 = tuple(settings["color3"])
     state.color4 = tuple(settings["color4"])
     state.noise = settings["noise"]
-    set_theme(state.color1, state.color2, state.color3, state.color4)
     add_boot_text(f"color1: {state.color1}")
     add_boot_text(f"color2: {state.color2}")
     add_boot_text(f"color3: {state.color3}")
     add_boot_text(f"color4: {state.color4}")
+
+    imagehelpers.channel_switch()
+    set_theme(state.color1, state.color2, state.color3, state.color4)
 
     dpg.delete_item("logo_image")
     dpg.delete_item("logo_texture")
@@ -380,15 +381,16 @@ dpg.create_viewport(title="x4AllianceTerminal",
 def animate_noise():
     while True:
         if state.noise:
-            img = (imagehelpers.generate_retro_boi(WIDTH, HEIGHT))
+            dpg.show_item("noise_draw")
+            img = imagehelpers.generate_retro_boi(WIDTH, HEIGHT)
             data = [x/255.0 for x in img.convert("RGBA").tobytes()]
             dpg.set_value("noise_texture", data)
         else:
-            dpg.set_value("noise_texture", [0.0] * (WIDTH * HEIGHT * 4))
+            dpg.hide_item("noise_draw")
         time.sleep(0.25)
 
 with dpg.viewport_drawlist(front=True):
-    dpg.draw_image("noise_texture", (0, 0), (WIDTH, HEIGHT))
+    dpg.draw_image("noise_texture", (0, 0), (WIDTH, HEIGHT), tag="noise_draw")
 
 #start noise
 threading.Thread(target=animate_noise, daemon=True).start()
@@ -400,5 +402,17 @@ dpg.set_primary_window("startup_window", True)
 dpg.hide_item("main_window")
 threading.Thread(target=boot_sequence, daemon=True).start()
 
-dpg.start_dearpygui()
+#framerate shit
+
+target_fps = 45
+frame_time = 1.0 / target_fps
+
+while dpg.is_dearpygui_running():
+    frame_start = time.perf_counter()
+    dpg.render_dearpygui_frame()
+    elapsed = time.perf_counter() - frame_start
+    sleep_time = frame_time - elapsed
+    if sleep_time > 0:
+        time.sleep(sleep_time)
+
 dpg.destroy_context()

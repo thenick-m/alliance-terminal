@@ -89,8 +89,16 @@ def edit():
         dpg.hide_item("update_leaderboard_button")
 
         def do_update():
+
+            #show the shit
+            dpg.show_item("leaderboard_loading_text")
+
+            #clear the stuff
+            dpg.delete_item("leaderboard_entries", children_only=True)
+
             loading_sound = sound.play_sound(locally("sounds/loading1.wav"))
             while not done[0]:
+
                 dpg.set_value("leaderboard_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
@@ -109,13 +117,14 @@ def edit():
             elif 'error' in result.keys():
                 set_text(f"ERROR: {result['error']}")
             else:
+
                 for i, user in enumerate(result["leaderboard"]):
-                    dpg.add_separator(parent="leaderboard_window")
+                    dpg.add_separator(parent="leaderboard_entries")
 
-                    place = dpg.add_text(f"{i+1}: {user["username"]}", parent="leaderboard_window")
-                    dpg.add_text(f"Contributions: {user["contributions"]}", parent="leaderboard_window")
+                    place = dpg.add_text(f"{i+1}: {user["username"]}", parent="leaderboard_entries")
+                    dpg.add_text(f"Contributions: {user["contributions"]}", parent="leaderboard_entries")
 
-                    dpg.add_separator(parent="leaderboard_window")
+                    dpg.add_separator(parent="leaderboard_entries")
                     if i < 3:
                         dpg.bind_item_font(place, state.big_font)
                 dpg.hide_item("leaderboard_loading_text")
@@ -131,6 +140,8 @@ def edit():
         run_async(lambda: rq.leaderboard(), on_complete)
 
     #EDIT SHIT
+
+    edit_args = {}
 
     def switch_edit_view():
         if state.current_edit_planet: 
@@ -162,10 +173,11 @@ def edit():
         dpg.delete_item("edit_fields", children_only=True)
 
         #fill edit_fields
-        for field, result in planet.items():
-            with dpg.child_window(parent="edit_fields", width=-1, height=30):
+        for field, result in sorted(planet.items()): #sort the thing 
+            with dpg.child_window(parent="edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True):
                 dpg.add_text(field)
-                dpg.set_value(dpg.add_input_text(hint="any", width=-1, pos=(100, 5)), result)
+                edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(100, 5))
+                dpg.set_value(edit_args[field], result)
 
 
 
@@ -183,7 +195,7 @@ def edit():
             dpg.set_value("index_input", current + key)
             current = current + key
 
-    def submit_edit(sender, app_data):
+    def submit_edit_get(sender, app_data):
         sound.play_sound(locally("sounds/submit5.wav"))
 
         index = dpg.get_value("index_input")
@@ -216,7 +228,13 @@ def edit():
             if result == None:
                 set_text("ERROR: couldn't contact server")
             elif 'error' in result.keys():
-                set_text(f"ERROR: {result['error']}")
+                if 'no matches' in result['error']: #no planet found
+                    populate_edit_tab({})
+                    switch_edit_view()
+                    dpg.hide_item("loading_text_edit")
+                    return
+                else:
+                    set_text(f"ERROR: {result['error']}")
             else:
                 populate_edit_tab(result['planet'])
                 switch_edit_view()
@@ -230,6 +248,25 @@ def edit():
 
         threading.Thread(target=do_edit, daemon=True).start()
         run_async(lambda: rq.get(index), on_complete)
+
+    def submit_edit():
+        sound.play_sound(locally("sounds/submit5.wav"))
+
+        dpg.hide_item("add_field_button")
+        dpg.hide_item("edit_fields")
+        dpg.hide_item("back_submit")
+
+        dpg.show_item("loading_text_edit_submit")
+
+        args = {field: dpg.get_value(field_input) for field, field_input in edit_args.items()}
+        
+        print(state.current_edit_planet)
+
+        #format edit args (putting it directly into the old discord bot formatter bc lazy)
+        args = " ".join([f"({field} = {value})" for field, value in args.items()])
+
+
+
 
     #UI
     dpg.add_button(label="log in through discord", tag="login_button", width=-1, height=100, callback=login)
@@ -258,21 +295,22 @@ def edit():
                         dpg.add_button(tag=f"{num}_edit", label=num, width=55, height=44,
                                     callback=numpad_press)
             
-            dpg.add_button(label="edit", width=-1, height=-1, callback=submit_edit)
+            dpg.add_button(label="edit", width=-1, height=-1, callback=submit_edit_get)
     dpg.hide_item("numpad_edit")
 
     #actual edit child window
     dpg.hide_item(dpg.add_text(tag="loading_text_edit")) #loading text
     with dpg.child_window(width=-1, height=-1, tag="edit_window", border=False):
-        dpg.add_button(label="+ add field +", width=-1, height=20)
+        dpg.hide_item(dpg.add_text(tag="loading_text_edit_submit"))
+        dpg.add_button(label="+ add field +", width=-1, height=20, tag="add_field_button")
         with dpg.child_window(width=-1, height=500, tag="edit_fields"):
             pass #populate_edit_tab fills this shit later
 
         #bottom
-        with dpg.child_window():
+        with dpg.child_window(tag="back_submit"):
             with dpg.group(horizontal=True):
                 dpg.add_button(label="back", width=WIDTH//2-10, height=-1, tag="back_edit", callback=back_to_numpad)
-                dpg.add_button(label="submit edit", width=-1, height=-1, tag="submit_edit")
+                dpg.add_button(label="submit edit", width=-1, height=-1, tag="submit_edit", callback=submit_edit)
 
     dpg.hide_item("edit_window")
 
@@ -281,3 +319,6 @@ def edit():
         dpg.add_separator()
         dpg.add_button(label="update", tag="update_leaderboard_button", width=-1, height=20, callback=update_leaderboard)
         dpg.add_text(tag="leaderboard_loading_text")
+
+        #leaderboard entries
+        dpg.add_group(tag="leaderboard_entries")
