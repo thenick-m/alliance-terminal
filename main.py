@@ -96,7 +96,7 @@ with dpg.texture_registry():
 # --- MAIN WINDOW ---
 with dpg.window(label="x4at", tag="main_window"):
 
-    def go_through_quit(sender, app_data):
+    def go_through_quit():
         sound.play_sound(locally("sounds/loading1.wav"))
 
         boot_text = ""
@@ -132,7 +132,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
     dpg.add_button(tag="quit_button", label="quit", pos=(305, 5), callback=go_through_quit)
 
-    def on_tab_switch(sender, app_data):
+    def on_tab_switch(_, app_data):
         sound.play_sound(locally("sounds/click.wav"))
         sound.play_sound(locally("sounds/switch.wav"))
         imagehelpers.channel_switch()
@@ -193,10 +193,12 @@ with dpg.window(label="x4at", tag="main_window"):
 
                         def change_theme(self):
                             sound.play_sound(locally("sounds/click2.wav"))
+                            sound.play_sound(locally("sounds/beep2.wav"))
                             set_theme(self.color1, self.color2, self.color3, self.color4)
+                            imagehelpers.channel_switch()
 
                         def add(self):
-                            button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda sender, app_data: self.change_theme())
+                            button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
                             dpg.bind_item_theme(button, self.theme)
 
 
@@ -211,7 +213,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_separator()
 
-            def change_volume(sender, app_data):
+            def change_volume(_, app_data):
 
                 sound.play_sound(locally("sounds/scroll.wav"), max_time=50)
 
@@ -225,14 +227,15 @@ with dpg.window(label="x4at", tag="main_window"):
                 callback=change_volume
                 )
             
-            def toggle_noise(sender, app_data):
+            def toggle_noise():
+                sound.play_sound(locally("sounds/switch2.wav"))
                 state.noise = not state.noise
 
             dpg.add_separator()
 
             dpg.add_checkbox(label="retroboi", callback=toggle_noise, default_value=state.noise)
             
-            def sales_demolition(sender, app_data):
+            def sales_demolition():
                 sound.play_sound(locally("sounds/click2.wav"))
                 with dpg.window(label="kys bro", modal=True, no_close=True,
                                 no_resize=True, no_move=True,
@@ -385,6 +388,7 @@ def animate_noise():
             img = imagehelpers.generate_retro_boi(WIDTH, HEIGHT)
             data = [x/255.0 for x in img.convert("RGBA").tobytes()]
             dpg.set_value("noise_texture", data)
+
         else:
             dpg.hide_item("noise_draw")
         time.sleep(0.25)

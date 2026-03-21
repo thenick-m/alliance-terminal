@@ -60,51 +60,42 @@ def generate_retro_boi(width, height, opacity=45):
 
     return Image.fromarray(img, 'RGBA')
 
-def channel_switch(duration=0.2):
+def channel_switch(duration=0.3): #TODO: optimize this shit
     width, height = state.WIDTH, state.HEIGHT
     c = state.color4
 
     img = np.zeros((height, width, 4), dtype=np.uint8)
     img[:, :] = [c[0], c[1], c[2], 230]
-    dpg.set_value("noise_texture", [x / 255.0 for x in Image.fromarray(img, "RGBA").tobytes()])
+    dpg.set_value("noise_texture", (img / 255.0).flatten().tolist())
 
     def _run():
         rng = np.random.default_rng()
         t_start = time.perf_counter()
 
+        base = np.array(generate_retro_boi(width, height))
+        flash = np.zeros((height, width, 4), dtype=np.uint8)
+        flash[:, :] = [c[0], c[1], c[2], 230]
+
         while True:
             t = (time.perf_counter() - t_start) / duration
             if t >= 1.0:
-                dpg.set_value("noise_texture", [0.0] * (width * height * 4))
+                if state.noise:
+                    img = generate_retro_boi(width, height)
+                    dpg.set_value("noise_texture", (np.array(img) / 255.0).flatten().tolist())
+                else:
+                    dpg.set_value("noise_texture", [0.0] * (width * height * 4))
                 break
 
             ease = 1.0 - t
             img = np.zeros((height, width, 4), dtype=np.uint8)
 
             if t < 0.2:
-                flash_alpha = int(230 * (1.0 - t / 0.2))
+                flash_alpha = int(50 * (1.0 - t / 0.2))
                 img[:, :] = [c[0], c[1], c[2], flash_alpha]
 
-            #horizontal tear bands (sync-loss lines)
-            n_tears = max(1, int(7 * ease))
-            for _ in range(n_tears):
-                y = int(rng.integers(0, height))
-                h = int(rng.integers(2, max(3, int(18 * ease))))
-                alpha = int(200 * ease)
-                img[y : y + h, :] = [c[0], c[1], c[2], alpha]
-
-            #per-row horizontal displacement
-            max_shift = int(width * 0.18 * ease)
-            if max_shift > 1:
-                for y in range(height):
-                    if rng.random() < 0.30 * ease:
-                        shift = int(rng.integers(-max_shift, max_shift))
-                        img[y] = np.roll(img[y], shift, axis=0)
-
-            #dense noise burst
             density = max(8, int(180 * ease))
             mask = rng.integers(0, density, (height, width)) == 0
-            streak = 30
+            streak = 10
             noise_alpha = int(200 * ease)
             for dx in range(streak):
                 s = np.roll(mask, dx, axis=1)
@@ -113,11 +104,10 @@ def channel_switch(duration=0.2):
                 img[s, 2] = c[2]
                 img[s, 3] = noise_alpha
 
-            #scanline darkening still present
             img[::2, :, 3] = np.clip(img[::2, :, 3].astype(int) - 50, 0, 255)
+            
 
-            data = [x / 255.0 for x in Image.fromarray(img, "RGBA").tobytes()]
-            dpg.set_value("noise_texture", data)
-
+            dpg.set_value("noise_texture", (img / 255.0).flatten().tolist())
+            time.sleep(0.02) 
 
     threading.Thread(target=_run, daemon=True).start()

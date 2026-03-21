@@ -206,7 +206,7 @@ def get():
     dpg.hide_item(dpg.add_child_window(tag="get_tab_content", width=-1, height=590, border=False))
 
     current = ""
-    def numpad_press(sender, app_data):
+    def numpad_press(sender):
         sound.play_sound(locally("sounds/click3.wav"))
         nonlocal current
 

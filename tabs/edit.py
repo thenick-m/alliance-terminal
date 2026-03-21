@@ -71,7 +71,7 @@ def edit():
 
             time.sleep(3)
 
-            dpg.hide_item("discord_thinking_window")                       
+            dpg.hide_item("discord_thinking_window") 
 
         threading.Thread(target=do_login, daemon=True).start()
 
@@ -83,7 +83,7 @@ def edit():
         else:
             run_async(lambda: rq.editor_login(), on_complete)
 
-    def update_leaderboard(sender, app_data):
+    def update_leaderboard():
         sound.play_sound(locally("sounds/click2.wav"))
 
         dpg.hide_item("update_leaderboard_button")
@@ -165,6 +165,7 @@ def edit():
         sound.play_sound(locally("sounds/submit4.wav"))
         state.current_edit_planet = None
         switch_edit_view()
+        dpg.hide_item("back_edit_button_error")
 
     def populate_edit_tab(planet):
         state.current_edit_planet = planet
@@ -173,16 +174,30 @@ def edit():
         dpg.delete_item("edit_fields", children_only=True)
 
         #fill edit_fields
-        for field, result in sorted(planet.items()): #sort the thing 
+        dpg.add_text("[ NEW FIELDS ]", parent="edit_fields")
+
+        dpg.add_separator(parent="edit_fields")
+        dpg.add_separator(parent="edit_fields")
+
+        dpg.add_group(tag="new_edit_fields", parent="edit_fields")
+
+        dpg.add_separator(parent="edit_fields")
+        dpg.add_separator(parent="edit_fields")
+
+        dpg.add_text("[ CURRENT FIELDS ]", parent="edit_fields")
+
+        for field, result in sorted(planet.items()): #sort the thing
             with dpg.child_window(parent="edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True):
-                dpg.add_text(field)
-                edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(100, 5))
+                with dpg.group(horizontal=True):
+                    dpg.add_button(label="X", width=20, height=20)
+                    dpg.add_text(field)
+                edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
                 dpg.set_value(edit_args[field], result)
 
 
 
     current = ""
-    def numpad_press(sender, app_data):
+    def numpad_press(sender):
         sound.play_sound(locally("sounds/click3.wav"))
         nonlocal current
 
@@ -195,7 +210,7 @@ def edit():
             dpg.set_value("index_input", current + key)
             current = current + key
 
-    def submit_edit_get(sender, app_data):
+    def submit_edit_get():
         sound.play_sound(locally("sounds/submit5.wav"))
 
         index = dpg.get_value("index_input")
@@ -243,7 +258,8 @@ def edit():
             
             sound.play_sound(locally("sounds/error.wav"))
             sound.play_sound(locally("sounds/error2.wav"))
-            dpg.show_item("back_edit")
+            dpg.show_item("back_edit_button_error")                      
+
                 
 
         threading.Thread(target=do_edit, daemon=True).start()
@@ -256,14 +272,76 @@ def edit():
         dpg.hide_item("edit_fields")
         dpg.hide_item("back_submit")
 
-        dpg.show_item("loading_text_edit_submit")
-
         args = {field: dpg.get_value(field_input) for field, field_input in edit_args.items()}
         
         print(state.current_edit_planet)
 
         #format edit args (putting it directly into the old discord bot formatter bc lazy)
-        args = " ".join([f"({field} = {value})" for field, value in args.items()])
+        args = " ".join([f"({field.capitalize()} = {value.capitalize()})" for field, value in args.items()])
+
+    #AUTOFILL SHIT
+    field_values = {k.lower(): v for k, v in field_data["fields"].items()}
+    all_fields = list(field_values.keys())
+    new_field_args = {}  #separate dict for new fields added via the inputs for convenicen
+
+    def add_field_input_changed(_, app_data):
+        suggestions = [f for f in all_fields if f.startswith(app_data.lower())]
+        dpg.configure_item("suggestion_list_edit", items=suggestions)
+
+    def add_value_input_changed(_, app_data):
+        field = dpg.get_value("add_field_edit").lower()
+        values = field_values.get(field, [])
+        suggestions = [v for v in values if str(v).startswith(app_data.lower())]
+        dpg.configure_item("suggestion_list_edit", items=suggestions)
+
+    def on_add_suggestion_click(_, app_data):
+        sound.play_sound(locally("sounds/loading2.wav"), max_time=100)
+
+        #TODO: fix whatever is making this not fucking work
+        if dpg.is_item_focused("add_field_edit") or not dpg.get_value("add_field_edit"):
+            dpg.set_value("add_field_edit", app_data)
+            field = app_data.lower()
+            values = field_values.get(field, [])
+            dpg.configure_item("suggestion_list_edit", items=values)
+            dpg.focus_item("add_value_edit")
+        else:
+            #fill value and commit
+            dpg.set_value("add_value_edit", app_data)
+            commit_new_field()
+
+    def commit_new_field():
+        field = dpg.get_value("add_field_edit").strip()
+        value = dpg.get_value("add_value_edit").strip()
+        if not field:
+            return
+
+        sound.play_sound(locally("sounds/submit3.wav"))
+
+        #add row to the new_edit_fields group
+        with dpg.child_window(parent="new_edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True):
+            with dpg.group(horizontal=True):
+                dpg.add_button(label="X", width=20, height=20)
+                dpg.add_text(field)
+            new_field_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(100, 5))
+            dpg.set_value(new_field_args[field], value)
+
+        #also register in main edit_args so submit picks it up
+        edit_args[field] = new_field_args[field]
+
+        #clear inputs
+        dpg.set_value("add_field_edit", "")
+        dpg.set_value("add_value_edit", "")
+        dpg.configure_item("suggestion_list_edit", items=[])
+        dpg.focus_item("add_field_edit")
+
+    def on_add_field_key(_, app_data):
+        if app_data == dpg.mvKey_Return:
+            field = dpg.get_value("add_field_edit").strip()
+            value = dpg.get_value("add_value_edit").strip()
+            if field and value:
+                commit_new_field()
+            elif field and not value:
+                dpg.focus_item("add_value_edit")
 
 
 
@@ -300,17 +378,29 @@ def edit():
 
     #actual edit child window
     dpg.hide_item(dpg.add_text(tag="loading_text_edit")) #loading text
+    dpg.hide_item(dpg.add_button(tag="back_edit_button_error", label="back to numpad", height=20, width=-1, callback=back_to_numpad))
+
     with dpg.child_window(width=-1, height=-1, tag="edit_window", border=False):
-        dpg.hide_item(dpg.add_text(tag="loading_text_edit_submit"))
-        dpg.add_button(label="+ add field +", width=-1, height=20, tag="add_field_button")
+
+        #input text
+        with dpg.group(horizontal=True):
+            with dpg.group():
+                dpg.bind_item_font(dpg.add_input_text(tag="add_field_edit", hint="<field>", width=200, height=30, callback=add_field_input_changed), state.big_font)
+                dpg.bind_item_font(dpg.add_input_text(tag="add_value_edit", hint="<value>", width=200, height=30, callback=add_value_input_changed), state.big_font)
+
+            #autofill item
+            dpg.add_listbox(items=[], tag="suggestion_list_edit", width=-1, callback=on_add_suggestion_click)
+    
         with dpg.child_window(width=-1, height=500, tag="edit_fields"):
-            pass #populate_edit_tab fills this shit later
+            pass #populate_edit_tab fills the other fields later
 
         #bottom
         with dpg.child_window(tag="back_submit"):
             with dpg.group(horizontal=True):
-                dpg.add_button(label="back", width=WIDTH//2-10, height=-1, tag="back_edit", callback=back_to_numpad)
+                dpg.add_button(label="back to numpad", width=WIDTH//2-10, height=-1, tag="back_edit", callback=back_to_numpad)
                 dpg.add_button(label="submit edit", width=-1, height=-1, tag="submit_edit", callback=submit_edit)
+
+
 
     dpg.hide_item("edit_window")
 
@@ -322,3 +412,6 @@ def edit():
 
         #leaderboard entries
         dpg.add_group(tag="leaderboard_entries")
+
+    with dpg.handler_registry():
+        dpg.add_key_press_handler(callback=on_add_field_key)

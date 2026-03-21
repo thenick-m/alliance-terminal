@@ -37,7 +37,7 @@ def search():
 
     complete_conditions = []
 
-    def switch_search_view(sender, app_data):
+    def switch_search_view():
 
         if state.search_results_view:
             sound.play_sound(locally("sounds/submit4.wav"))
@@ -78,12 +78,12 @@ def search():
         
         return []
     
-    def on_input_change(sender, app_data):
+    def on_input_change(_, app_data):
         suggestions = get_suggestions(app_data)
         
         dpg.configure_item("suggestion_list", items=suggestions)
 
-    def on_suggestion_click(sender, app_data):
+    def on_suggestion_click(_, app_data):
         sound.play_sound(locally("sounds/loading2.wav"), max_time=100)
 
         #parse the query input
@@ -112,7 +112,7 @@ def search():
             #this is a hack to get around highlighting
             threading.Timer(0.05, lambda: pyautogui.press("end")).start()
 
-    def on_key_press(sender, app_data):
+    def on_key_press(_, app_data):
         #only activate if its supposed to
         if not state.search_results_view and (dpg.get_item_alias(dpg.get_value("tab_bar")) == "search_tab") and (app_data == dpg.mvKey_Return): 
             text = dpg.get_value("query_input")
@@ -133,18 +133,18 @@ def search():
                 dpg.configure_item("suggestion_list", items=[])
                 dpg.focus_item("query_input")
 
-    def on_key_release(sender, app_data):
+    def on_key_release():
         if dpg.is_item_focused("query_input"):
             on_input_change(None, dpg.get_value("query_input"))
 
-    def on_condition_click(sender, app_data):
+    def on_condition_click(_, app_data):
         sound.play_sound(locally("sounds/submit4.wav"))
 
         #delete tjhat shit yk what im sayn 😂
         complete_conditions.pop(complete_conditions.index(app_data))
         dpg.configure_item("condition_list", items=complete_conditions)
 
-    def submit_search(sender, app_data): #TODO: move this shit into another module
+    def submit_search():
 
         sound.play_sound(locally("sounds/submit5.wav"))
 
@@ -154,7 +154,7 @@ def search():
         searchStringArg = " ".join([f"({condition})" for condition in complete_conditions])
         print(complete_conditions)
 
-        switch_search_view(0, 0)
+        switch_search_view()
 
         def populate_results(results):
 
@@ -205,7 +205,7 @@ def search():
                     wrap=180
                 )
 
-                def change_get_planet(sender, app_data):
+                def change_get_planet(sender):
                     sound.play_sound(locally("sounds/click2.wav"))
                     populate_get_tab(results_dict[sender])  #sets state.current_get_planet internally
                     dpg.set_value("tab_bar", "get_tab")
@@ -249,7 +249,7 @@ def search():
     with dpg.handler_registry():
         dpg.add_key_release_handler(callback=on_key_release)
         dpg.add_key_press_handler(callback=on_key_press)
-        dpg.add_mouse_wheel_handler(callback=lambda sender, app_data: sound.play_sound(locally("sounds/scroll.wav"), max_time=50))
+        dpg.add_mouse_wheel_handler(callback=lambda: sound.play_sound(locally("sounds/scroll.wav"), max_time=50))
 
     #UI
     with dpg.group(parent="search_tab"):
