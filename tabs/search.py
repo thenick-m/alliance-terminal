@@ -45,7 +45,8 @@ def search():
             dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
 
             state.search_results_view = False
-            dpg.hide_item("loading_text")
+            dpg.hide_item("search_loading_text_error")
+            dpg.hide_item("search_loading_text")
             dpg.hide_item("results_panel")
             dpg.hide_item("back_button")
             dpg.show_item("condition_and_button")
@@ -58,7 +59,7 @@ def search():
             dpg.hide_item("condition_and_button")
             dpg.hide_item("query_input")
             dpg.hide_item("suggestion_list")
-            dpg.show_item("loading_text")
+            dpg.show_item("search_loading_text")
     
     #get text suggestions for command line
     def get_suggestions(text):
@@ -164,7 +165,7 @@ def search():
             sound.play_sound(locally("sounds/reciept1.wav"))
             sound.play_sound(locally("sounds/success.wav"))
 
-            dpg.set_value("loading_text", f"{len(results)} results {'(MAX)' if len(results) == 100 else ''}")
+            dpg.set_value("search_loading_text", f"{len(results)} results {'(MAX)' if len(results) == 100 else ''}")
             dpg.show_item("results_panel")
             dpg.show_item("back_button")
             dpg.delete_item("results_panel", children_only=True)
@@ -218,7 +219,7 @@ def search():
         def do_search():
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             while not done[0]:
-                dpg.set_value("loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("search_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
 
@@ -228,15 +229,17 @@ def search():
             done[0] = True
 
             def set_text(text):
-                dpg.set_value("loading_text", text)
+                dpg.set_value("search_loading_text", text)
 
             if result == None:
-                set_text("ERROR: couldn't contact server")
+                set_text("couldn't contact server")
             elif 'error' in result.keys():
-                set_text(f"ERROR: {result['error']}")
+                set_text(f"{result['error']}")
             else:
                 populate_results(result['matches'])
                 return
+            
+            dpg.show_item("search_loading_text_error")
             
             sound.play_sound(locally("sounds/error.wav"))
             sound.play_sound(locally("sounds/error2.wav"))
@@ -253,9 +256,12 @@ def search():
 
     #UI
     with dpg.group(parent="search_tab"):
-                                
-        dpg.add_text(tag="loading_text")
-        dpg.hide_item("loading_text")
+        
+        dpg.bind_item_font(dpg.add_text("ERROR", tag="search_loading_text_error"), state.big_font)
+        dpg.hide_item("search_loading_text_error")
+
+        dpg.add_text(tag="search_loading_text")
+        dpg.hide_item("search_loading_text")
 
         with dpg.child_window(tag="results_panel", width=-1, height=570, border=True):
             dpg.hide_item("results_panel")

@@ -97,6 +97,7 @@ with dpg.texture_registry():
 with dpg.window(label="x4at", tag="main_window"):
 
     def go_through_quit():
+        dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
         sound.play_sound(locally("sounds/loading1.wav"))
 
         boot_text = ""

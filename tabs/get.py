@@ -14,17 +14,19 @@ def switch_get_view():
     if state.current_get_planet: 
         dpg.show_item("get_tab_content")
         dpg.show_item("back_get")
+
         dpg.hide_item("numpad")
-        dpg.hide_item("loading_text_get")
+        dpg.hide_item("get_loading_text")
+
         dpg.configure_viewport(0, width=state.WIDTH, height=state.HEIGHT)
     else: #numpad
         dpg.hide_item("get_tab_content")
         dpg.hide_item("back_get")
         dpg.show_item("numpad")
-        dpg.hide_item("loading_text_get")
+        dpg.hide_item("get_loading_text")
         dpg.configure_viewport(0, width=state.WIDTH, height=state.WIDTH)
         
-def populate_get_tab(planet): #TODO: move this shit into another module
+def populate_get_tab(planet):
 
     dpg.delete_item("get_tab_content", children_only=True) #clear
 
@@ -101,7 +103,7 @@ def populate_get_tab(planet): #TODO: move this shit into another module
     
     resource_graph = dpg.add_child_window(parent="get_tab_content", width=-1, height=230, border=True)
 
-    # header with toggle button
+    #header with toggle button
     header_group = dpg.add_group(horizontal=True, parent=resource_graph)
     dpg.add_text("[ RESOURCES ]", parent=header_group)
     dpg.add_button(label="text", tag="resource_toggle", parent=header_group, width=-1,
@@ -231,10 +233,10 @@ def get():
 
         def do_get():
             dpg.hide_item("numpad")
-            dpg.show_item("loading_text_get")
+            dpg.show_item("get_loading_text")
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             while not done[0]:
-                dpg.set_value("loading_text_get", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("get_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
             sound.play_sound(locally("sounds/receipt.wav"))
@@ -246,28 +248,32 @@ def get():
             done[0] = True
 
             def set_text(text):
-                dpg.set_value("loading_text_get", text)
+                dpg.set_value("get_loading_text", text)
 
             if result == None:
-                set_text("ERROR: couldn't contact server")
+                set_text("couldn't contact server")
             elif 'error' in result.keys():
-                set_text(f"ERROR: {result['error']}")
+                set_text(f"{result['error']}")
             else:
                 populate_get_tab(result['planet'])
                 switch_get_view()
-                dpg.hide_item("loading_text_get")
+                dpg.hide_item("get_loading_text")
                 return
             
             sound.play_sound(locally("sounds/error.wav"))
             sound.play_sound(locally("sounds/error2.wav"))
+
+            dpg.show_item("get_loading_text_error")
             dpg.show_item("back_get")
                 
 
         threading.Thread(target=do_get, daemon=True).start()
         run_async(lambda: rq.get(index), on_complete)
 
+    dpg.bind_item_font(dpg.add_text("ERROR", tag="get_loading_text_error"), state.big_font)
+    dpg.hide_item("get_loading_text_error")
         
-    dpg.hide_item(dpg.add_text(tag="loading_text_get", parent="get_tab"))
+    dpg.hide_item(dpg.add_text(tag="get_loading_text", parent="get_tab"))
 
     with dpg.child_window(tag="numpad", width=-1, height=230):
         dpg.add_input_text(tag="planet_id_input", hint="index", width=-1)
@@ -298,6 +304,9 @@ def get():
     #make button for returning to numpad
     def back_to_numpad():
         sound.play_sound(locally("sounds/submit4.wav"))
+
+        dpg.hide_item("get_loading_text_error")
+        
         state.current_get_planet = None
         switch_get_view()
 

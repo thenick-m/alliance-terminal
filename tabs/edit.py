@@ -167,6 +167,13 @@ def edit():
         switch_edit_view()
         dpg.hide_item("back_edit_button_error")
 
+    def delete_field(field, tag):
+        sound.play_sound(locally("sounds/submit4.wav"))
+        dpg.delete_item(tag)
+        print(f"deleting item {tag}")
+        edit_args.pop(field, None)
+        new_field_args.pop(field, None)
+
     def populate_edit_tab(planet):
         state.current_edit_planet = planet
 
@@ -181,19 +188,122 @@ def edit():
 
         dpg.add_group(tag="new_edit_fields", parent="edit_fields")
 
+        #separate data
+        name = planet.get("Name")
+        star_id = planet.get("StarID")
+        index = planet.get("Index")
+        planet_id = planet.get("PlanetID")
+        planet_count = planet.get("PlanetCount")
+
+        physical = {
+            "Gravity": planet.get("Gravity"),
+            "Radius": planet.get("Radius"),
+            "Moons": planet.get("Moons"),
+        }
+
+        environment = {
+            "Atmosphere": planet.get("Atmosphere"),
+            "Oceans": planet.get("Oceans"),
+            "Tectonics": planet.get("Tectonics"),
+            "Life": planet.get("Life"),
+        }
+
+        resource_fields = state.field_data["resource_fields"]
+        resource_fields_normalized = [f.lower() for f in resource_fields]
+
+        deposit_fields = ["Lime", "Quartz", "Saltpeter", "Limestone", "Saltground", "Trees", "Quartz"]
+
+        deposit_resources = {k: v for k, v in planet.items() if k in deposit_fields}
+
+        numeric_resources = {k: v for k, v in planet.items() if k.lower() in resource_fields_normalized and not isinstance(v, bool)}
+        
+        known_fields = set(physical.keys()) | set(environment.keys()) | set(resource_fields) | set(deposit_fields) | {"Name", "StarID", "Index", "PlanetID", "PlanetCount"}
+        other = {k: v for k, v in planet.items() if k not in known_fields}
+
         dpg.add_separator(parent="edit_fields")
         dpg.add_separator(parent="edit_fields")
 
-        dpg.add_text("[ CURRENT FIELDS ]", parent="edit_fields")
+        dpg.add_text("[ PHYSICAL ]", parent="edit_fields")
+        if physical:
+            for field, result in physical.items():
+                if result is not None:
+                    tag = f"field_row_{field}"
+                    with dpg.child_window(parent="edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True, tag=tag):
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(label="X", width=20, height=20,
+                                        user_data=(field, tag),
+                                        callback=lambda s, a, u: delete_field(u[0], u[1]))
+                            dpg.add_text(field)
+                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        dpg.set_value(edit_args[field], result)
 
-        for field, result in sorted(planet.items()): #sort the thing
-            with dpg.child_window(parent="edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True):
-                with dpg.group(horizontal=True):
-                    dpg.add_button(label="X", width=20, height=20)
-                    dpg.add_text(field)
-                edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
-                dpg.set_value(edit_args[field], result)
+        dpg.add_separator(parent="edit_fields")
+        dpg.add_separator(parent="edit_fields")
 
+        dpg.add_text("[ ENVIRONMENT ]", parent="edit_fields")
+        if environment:
+            for field, result in environment.items():
+                if result is not None:
+                    tag = f"field_row_{field}"
+                    with dpg.child_window(parent="edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True, tag=tag):
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(label="X", width=20, height=20,
+                                        user_data=(field, tag),
+                                        callback=lambda s, a, u: delete_field(u[0], u[1]))
+                            dpg.add_text(field)
+                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        dpg.set_value(edit_args[field], result)
+
+        dpg.add_separator(parent="edit_fields")
+        dpg.add_separator(parent="edit_fields")
+
+        dpg.add_text("[ OTHER ]", parent="edit_fields")
+        if other:
+            for field, result in other.items():
+                if result is not None:
+                    tag = f"field_row_{field}"
+                    with dpg.child_window(parent="edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True, tag=tag):
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(label="X", width=20, height=20,
+                                        user_data=(field, tag),
+                                        callback=lambda s, a, u: delete_field(u[0], u[1]))
+                            dpg.add_text(field)
+                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        dpg.set_value(edit_args[field], result)
+
+        dpg.add_separator(parent="edit_fields")
+        dpg.add_separator(parent="edit_fields")
+
+        dpg.add_text("[ RESOURCES ]", parent="edit_fields")
+        if numeric_resources:
+            for field, result in numeric_resources.items():
+                if result is not None:
+                    tag = f"field_row_{field}"
+                    with dpg.child_window(parent="edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True, tag=tag):
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(label="X", width=20, height=20,
+                                        user_data=(field, tag),
+                                        callback=lambda s, a, u: delete_field(u[0], u[1]))
+                            dpg.add_text(field)
+                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        dpg.set_value(edit_args[field], result)
+
+        dpg.add_separator(parent="edit_fields")
+        dpg.add_separator(parent="edit_fields")
+
+        dpg.add_text("[ DEPOSITS ]", parent="edit_fields")
+        if deposit_resources:
+            for field, result in deposit_resources.items():
+                if result is not None:
+                    tag = f"field_row_{field}"
+                    with dpg.child_window(parent="edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True, tag=tag):
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(label="X", width=20, height=20,
+                                        user_data=(field, tag),
+                                        callback=lambda s, a, u: delete_field(u[0], u[1]))
+                            dpg.add_text(field)
+                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        dpg.set_value(edit_args[field], result)
 
 
     current = ""
@@ -240,6 +350,7 @@ def edit():
             def set_text(text):
                 dpg.set_value("loading_text_edit", text)
 
+            print(result)
             if result == None:
                 set_text("ERROR: couldn't contact server")
             elif 'error' in result.keys():
@@ -268,16 +379,31 @@ def edit():
     def submit_edit():
         sound.play_sound(locally("sounds/submit5.wav"))
 
-        dpg.hide_item("add_field_button")
         dpg.hide_item("edit_fields")
         dpg.hide_item("back_submit")
 
-        args = {field: dpg.get_value(field_input) for field, field_input in edit_args.items()}
+        protected = {"starid", "planetid", "index", "planetcount", "ismoon", "name"}
+
+        args = {field.capitalize(): str(value) 
+                for field, value in state.current_edit_planet.items()
+                if field.lower() not in protected}
+
+        new_args = {field.capitalize(): str(dpg.get_value(field_input)) 
+                    for field, field_input in edit_args.items()
+                    if field.lower() not in protected}
         
-        print(state.current_edit_planet)
+        def dict_diff(dict_a, dict_b): #gets the difference between two dicts
+            result = {
+                'added': {k: dict_b[k] for k in dict_b.keys() - dict_a.keys()},
+                'removed': {k: dict_a[k] for k in dict_a.keys() - dict_b.keys()},
+                'value_diffs': {k: dict_b[k] for k in dict_a.keys() & dict_b.keys() if dict_a[k] != dict_b[k]}
+            }
+            return result
+        
+        edits = dict_diff(args, new_args)
 
         #format edit args (putting it directly into the old discord bot formatter bc lazy)
-        args = " ".join([f"({field.capitalize()} = {value.capitalize()})" for field, value in args.items()])
+        print(edits)
 
     #AUTOFILL SHIT
     field_values = {k.lower(): v for k, v in field_data["fields"].items()}
@@ -312,16 +438,37 @@ def edit():
     def commit_new_field():
         field = dpg.get_value("add_field_edit").strip()
         value = dpg.get_value("add_value_edit").strip()
+
         if not field:
+            return
+        
+        if field in edit_args:
+            def awiguairhg():
+                sound.play_sound(locally("sounds/error2.wav"))
+                dpg.set_value("add_field_edit", "")
+                dpg.set_value("add_value_edit", "")
+                dpg.configure_item("suggestion_list_edit", items=[])
+                dpg.focus_item("add_field_edit")
+
+                dpg.show_item("loading_text_edit")
+                dpg.set_value("loading_text_edit", "ERROR: field already present")
+                time.sleep(3)
+                dpg.hide_item("loading_text_edit") 
+            threading.Thread(target=awiguairhg, daemon=True).start()
             return
 
         sound.play_sound(locally("sounds/submit3.wav"))
 
+
         #add row to the new_edit_fields group
-        with dpg.child_window(parent="new_edit_fields", width=-1, height=30, no_scrollbar=True, no_scroll_with_mouse=True):
+        tag = f"field_row_{field}"
+        with dpg.child_window(parent="new_edit_fields", width=-1, height=30,
+                              no_scrollbar=True, no_scroll_with_mouse=True, tag=tag):
             with dpg.group(horizontal=True):
-                dpg.add_button(label="X", width=20, height=20)
-                dpg.add_text(field)
+                dpg.add_button(label="X", width=20, height=20,
+                            user_data=(field, tag),
+                            callback=lambda _, __, u: delete_field(u[0], u[1]))
+                dpg.add_text(field.capitalize())
             new_field_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(100, 5))
             dpg.set_value(new_field_args[field], value)
 
@@ -336,6 +483,13 @@ def edit():
 
     def on_add_field_key(_, app_data):
         if app_data == dpg.mvKey_Return:
+            suggestions = dpg.get_item_configuration("suggestion_list_edit")["items"]
+
+            if suggestions:
+                on_add_suggestion_click(None, suggestions[0])
+                return
+
+            #commit directly
             field = dpg.get_value("add_field_edit").strip()
             value = dpg.get_value("add_value_edit").strip()
             if field and value:
