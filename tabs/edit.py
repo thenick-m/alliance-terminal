@@ -142,20 +142,23 @@ def edit():
     #EDIT SHIT
 
     edit_args = {}
+    original_fields = set()
 
     def switch_edit_view():
         if state.current_edit_planet: 
             dpg.hide_item("leaderboard_window")
             dpg.hide_item("numpad_edit")
-            dpg.hide_item("loading_text_edit")
 
             dpg.show_item("edit_window")
             dpg.show_item("back_edit")
             dpg.show_item("submit_edit")
+            dpg.show_item("edit_fields")
+            dpg.show_item("field_value_edits")
+            dpg.show_item("back_submit")
         else: #numpad & leaderboard
             dpg.hide_item("edit_window")
             dpg.hide_item("back_edit")
-            dpg.hide_item("loading_text_edit")
+            dpg.hide_item("edit_loading_text")
             dpg.hide_item("submit_edit")
 
             dpg.show_item("leaderboard_window")
@@ -165,7 +168,8 @@ def edit():
         sound.play_sound(locally("sounds/submit4.wav"))
         state.current_edit_planet = None
         switch_edit_view()
-        dpg.hide_item("back_edit_button_error")
+        dpg.hide_item("edit_loading_text_error")
+        dpg.hide_item("edit_back_button_error")
 
     def delete_field(field, tag):
         sound.play_sound(locally("sounds/submit4.wav"))
@@ -173,9 +177,26 @@ def edit():
         print(f"deleting item {tag}")
         edit_args.pop(field, None)
         new_field_args.pop(field, None)
+        
 
     def populate_edit_tab(planet):
         state.current_edit_planet = planet
+
+        edit_args.clear()
+        original_fields.clear()
+        new_field_args.clear()
+
+        if planet == 1:
+            planet = {}
+
+            def woatfhalb():
+                dpg.show_item("edit_loading_text")
+                dpg.set_value("edit_loading_text", "Index doesn't exist, client-side template:")
+                time.sleep(3)
+                dpg.hide_item("edit_loading_text")
+
+
+            threading.Thread(target=woatfhalb, daemon=True).start()
 
         #clear edit_fields
         dpg.delete_item("edit_fields", children_only=True)
@@ -189,11 +210,6 @@ def edit():
         dpg.add_group(tag="new_edit_fields", parent="edit_fields")
 
         #separate data
-        name = planet.get("Name")
-        star_id = planet.get("StarID")
-        index = planet.get("Index")
-        planet_id = planet.get("PlanetID")
-        planet_count = planet.get("PlanetCount")
 
         physical = {
             "Gravity": planet.get("Gravity"),
@@ -235,6 +251,7 @@ def edit():
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
                         edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
         dpg.add_separator(parent="edit_fields")
@@ -252,6 +269,7 @@ def edit():
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
                         edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
         dpg.add_separator(parent="edit_fields")
@@ -269,6 +287,7 @@ def edit():
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
                         edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
         dpg.add_separator(parent="edit_fields")
@@ -286,6 +305,7 @@ def edit():
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
                         edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
         dpg.add_separator(parent="edit_fields")
@@ -303,6 +323,7 @@ def edit():
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
                         edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
 
@@ -333,10 +354,10 @@ def edit():
         def do_edit():
             dpg.hide_item("numpad_edit")
             dpg.hide_item("leaderboard_window")
-            dpg.show_item("loading_text_edit")
+            dpg.show_item("edit_loading_text")
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             while not done[0]:
-                dpg.set_value("loading_text_edit", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("edit_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
             sound.play_sound(locally("sounds/receipt.wav"))
@@ -347,29 +368,35 @@ def edit():
         def on_complete(result):
             done[0] = True
 
+            state.current_edit_index = None
+            state.current_edit_planet = None
+
             def set_text(text):
-                dpg.set_value("loading_text_edit", text)
+                dpg.set_value("edit_loading_text", text)
 
             print(result)
             if result == None:
-                set_text("ERROR: couldn't contact server")
+                set_text("couldn't contact server")
             elif 'error' in result.keys():
-                if 'no matches' in result['error']: #no planet found
-                    populate_edit_tab({})
+                if result['error'] == 'no matches found': #no planet found
+                    populate_edit_tab(1)
                     switch_edit_view()
-                    dpg.hide_item("loading_text_edit")
+                    state.current_edit_index = index
                     return
                 else:
-                    set_text(f"ERROR: {result['error']}")
+                    set_text(f"{result['error']}")
             else:
                 populate_edit_tab(result['planet'])
                 switch_edit_view()
-                dpg.hide_item("loading_text_edit")
+                dpg.hide_item("edit_loading_text")
+                state.current_edit_index = index
                 return
             
             sound.play_sound(locally("sounds/error.wav"))
             sound.play_sound(locally("sounds/error2.wav"))
-            dpg.show_item("back_edit_button_error")                      
+
+            dpg.show_item("edit_loading_text_error")
+            dpg.show_item("edit_back_button_error")                      
 
                 
 
@@ -381,16 +408,18 @@ def edit():
 
         dpg.hide_item("edit_fields")
         dpg.hide_item("back_submit")
+        dpg.hide_item("field_value_edits")
 
-        protected = {"starid", "planetid", "index", "planetcount", "ismoon", "name"}
+        if state.current_edit_planet == 1:
+            state.current_edit_planet = {}
 
-        args = {field.capitalize(): str(value) 
+        args = {field.capitalize(): str(value)
                 for field, value in state.current_edit_planet.items()
-                if field.lower() not in protected}
+                if field.lower() in original_fields or field in original_fields}
 
-        new_args = {field.capitalize(): str(dpg.get_value(field_input)) 
-                    for field, field_input in edit_args.items()
-                    if field.lower() not in protected}
+        new_args = {field.capitalize(): str(dpg.get_value(field_input))
+                    for field, field_input in edit_args.items()}
+
         
         def dict_diff(dict_a, dict_b): #gets the difference between two dicts
             result = {
@@ -403,7 +432,50 @@ def edit():
         edits = dict_diff(args, new_args)
 
         #format edit args (putting it directly into the old discord bot formatter bc lazy)
-        print(edits)
+
+        send_out = []
+        send_out += [f"({k} = {v})" for k, v in edits['added'].items()]
+        send_out += [f"({k} = {v})" for k, v in edits['value_diffs'].items()]
+        send_out += [f"({k} = /DEL)" for k in edits['removed'].keys()]
+
+        edit_string = f"{state.current_edit_index} {" ".join(send_out)}"
+        print(edit_string)
+
+        def do_edit():
+            loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
+            dpg.show_item("edit_loading_text")
+            while not done[0]:
+                dpg.set_value("edit_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                time.sleep(0.1)
+            loading_sound.stop()
+
+        done = [False]
+
+        def on_complete(result):
+            done[0] = True
+
+            def set_text(text):
+                dpg.set_value("edit_loading_text", text)
+
+            if result == None:
+                set_text("couldn't contact server")
+            elif 'error' in result.keys():
+                set_text(f"{result['error']}")
+            else:
+                set_text(result['summary'])
+                dpg.show_item("edit_back_button_error")
+                return
+            
+            dpg.show_item("edit_loading_text_error")
+            
+            sound.play_sound(locally("sounds/error.wav"))
+            sound.play_sound(locally("sounds/error2.wav"))
+            dpg.show_item("edit_back_button_error")
+
+        threading.Thread(target=do_edit, daemon=True).start()
+        run_async(lambda: rq.edit(edit_string, 15), on_complete)
+        
+        
 
     #AUTOFILL SHIT
     field_values = {k.lower(): v for k, v in field_data["fields"].items()}
@@ -450,10 +522,10 @@ def edit():
                 dpg.configure_item("suggestion_list_edit", items=[])
                 dpg.focus_item("add_field_edit")
 
-                dpg.show_item("loading_text_edit")
-                dpg.set_value("loading_text_edit", "ERROR: field already present")
+                dpg.show_item("edit_loading_text")
+                dpg.set_value("edit_loading_text", "ERROR: field already present")
                 time.sleep(3)
-                dpg.hide_item("loading_text_edit") 
+                dpg.hide_item("edit_loading_text") 
             threading.Thread(target=awiguairhg, daemon=True).start()
             return
 
@@ -474,6 +546,7 @@ def edit():
 
         #also register in main edit_args so submit picks it up
         edit_args[field] = new_field_args[field]
+        original_fields.add(field)
 
         #clear inputs
         dpg.set_value("add_field_edit", "")
@@ -531,13 +604,16 @@ def edit():
     dpg.hide_item("numpad_edit")
 
     #actual edit child window
-    dpg.hide_item(dpg.add_text(tag="loading_text_edit")) #loading text
-    dpg.hide_item(dpg.add_button(tag="back_edit_button_error", label="back to numpad", height=20, width=-1, callback=back_to_numpad))
+    dpg.bind_item_font(dpg.add_text("ERROR", tag="edit_loading_text_error"), state.big_font)
+    dpg.hide_item("edit_loading_text_error")
+
+    dpg.hide_item(dpg.add_text(tag="edit_loading_text")) #loading text
+    dpg.hide_item(dpg.add_button(tag="edit_back_button_error", label="back to numpad", height=20, width=-1, callback=back_to_numpad))
 
     with dpg.child_window(width=-1, height=-1, tag="edit_window", border=False):
 
         #input text
-        with dpg.group(horizontal=True):
+        with dpg.group(tag="field_value_edits", horizontal=True):
             with dpg.group():
                 dpg.bind_item_font(dpg.add_input_text(tag="add_field_edit", hint="<field>", width=200, height=30, callback=add_field_input_changed), state.big_font)
                 dpg.bind_item_font(dpg.add_input_text(tag="add_value_edit", hint="<value>", width=200, height=30, callback=add_value_input_changed), state.big_font)

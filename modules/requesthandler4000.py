@@ -60,8 +60,8 @@ def editor_login():
 
     return result
 
-def edit():
-    return request("edit", {})
+def edit(stringSearchArg, polls):
+    return request("edit", {"stringSearchArg": stringSearchArg}, polls=polls)
 
 def ping():
     return request("ping")

@@ -36,7 +36,7 @@ def run_async(fn, callback):
 WIDTH = 363
 HEIGHT = 705
 
-debug = True
+debug = False
 
 color1 = (0, 0, 0)
 color2 = (40, 20, 5)
@@ -47,7 +47,7 @@ noise = True
 
 search_results_view = False
 current_get_planet = None
-current_edit_planet = None
+current_edit_planet = None; current_edit_index = None
 
 editor_mode = False
 

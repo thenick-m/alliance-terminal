@@ -325,6 +325,7 @@ def boot_sequence():
     add_boot_text(f"color4: {state.color4}")
 
     imagehelpers.channel_switch()
+    sound.play_sound(locally("sounds/static.wav"))
     set_theme(state.color1, state.color2, state.color3, state.color4)
 
     dpg.delete_item("logo_image")
@@ -334,34 +335,6 @@ def boot_sequence():
     
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
-    #debug shit
-    if state.debug: end_boot_sequence(); return
-
-    #server connection stuff
-    add_boot_border(f"SERVER CONNECTION")
-
-    add_boot_text("trying server connection...")
-    start_time = time.perf_counter()
-    ping = rq.ping()
-    if ping == None:
-        add_boot_text("server connection failed")
-        add_boot_text("attempt 2...")
-        start_time = time.perf_counter()
-        
-    ping = rq.ping()
-    if ping == None:
-        add_boot_text("server connection failed")
-        add_boot_text("closing program...")
-        time.sleep(1)
-        dpg.stop_dearpygui()
-
-    ping_elapsed = time.perf_counter()-start_time
-
-    add_boot_text(f"X4atbackend: {ping}")
-    add_boot_text(f"ping: {1000*ping_elapsed:.2f}ms")
-    add_boot_text("sever connection verified")
-
-    add_boot_border()
 
     add_boot_text("starting main window...")
     time.sleep(0.1)
