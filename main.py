@@ -11,7 +11,7 @@ from modules import audioshit as sound
 from modules import imagehelpers
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "0.1.5"
+VERSION = "0.2.0"
 
 
 def make_theme(color1, color2, color3, color4):

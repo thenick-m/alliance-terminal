@@ -60,14 +60,14 @@ def editor_login():
 
     return result
 
-def edit(stringSearchArg, polls):
-    return request("edit", {"stringSearchArg": stringSearchArg}, polls=polls)
+def edit(stringSearchArg):
+    return request("edit", {"stringSearchArg": stringSearchArg})
 
 def ping():
     return request("ping")
 
 def search(stringSearchArg:str):
-    return request("search", {"stringSearchArg": stringSearchArg})
+    return request("search", {"stringSearchArg": stringSearchArg}, polls=10)
 
 def get(planetID:str):
     return request("get", {"planetID": planetID})

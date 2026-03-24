@@ -167,9 +167,27 @@ def edit():
     def back_to_numpad():
         sound.play_sound(locally("sounds/submit4.wav"))
         state.current_edit_planet = None
+        state.current_edit_index = None
         switch_edit_view()
         dpg.hide_item("edit_loading_text_error")
         dpg.hide_item("edit_back_button_error")
+        dpg.hide_item("edit_back_button")
+
+    def back_to_edit():
+        sound.play_sound(locally("sounds/submit4.wav"))
+
+        dpg.hide_item("edit_loading_text")
+        dpg.hide_item("edit_back_button_error")
+        dpg.hide_item("edit_back_button")
+        dpg.hide_item("edit_loading_text_error")
+
+
+        dpg.show_item("edit_window")
+        dpg.show_item("back_edit")
+        dpg.show_item("submit_edit")
+        dpg.show_item("edit_fields")
+        dpg.show_item("field_value_edits")
+        dpg.show_item("back_submit")
 
     def delete_field(field, tag):
         sound.play_sound(locally("sounds/submit4.wav"))
@@ -368,9 +386,6 @@ def edit():
         def on_complete(result):
             done[0] = True
 
-            state.current_edit_index = None
-            state.current_edit_planet = None
-
             def set_text(text):
                 dpg.set_value("edit_loading_text", text)
 
@@ -409,6 +424,11 @@ def edit():
         dpg.hide_item("edit_fields")
         dpg.hide_item("back_submit")
         dpg.hide_item("field_value_edits")
+        
+        dpg.hide_item("edit_back_button")
+        dpg.hide_item("edit_back_button_error")
+        dpg.hide_item("edit_loading_text_error")
+        dpg.hide_item("edit_loading_text")
 
         if state.current_edit_planet == 1:
             state.current_edit_planet = {}
@@ -463,17 +483,38 @@ def edit():
                 set_text(f"{result['error']}")
             else:
                 set_text(result['summary'])
+
+                sound.play_sound(locally("sounds/reciept1.wav"))
+                sound.play_sound(locally("sounds/success.wav"))
+
                 dpg.show_item("edit_back_button_error")
+                dpg.show_item("edit_back_button")
+
+                dpg.set_value("edit_loading_text_error", "SUCCESS")
+                dpg.show_item("edit_loading_text_error")
+
+                def waluifhruifb():
+                    for _ in range(10):
+                        dpg.set_value("edit_loading_text_error", "SUCCESS !!!")
+                        time.sleep(0.5)
+                        dpg.set_value("edit_loading_text_error", "SUCCESS")
+                        time.sleep(0.5)
+
+                    dpg.set_value("edit_loading_text_error", "ERROR")
+                threading.Thread(target=waluifhruifb, daemon=True).start()
+
                 return
-            
-            dpg.show_item("edit_loading_text_error")
             
             sound.play_sound(locally("sounds/error.wav"))
             sound.play_sound(locally("sounds/error2.wav"))
+
             dpg.show_item("edit_back_button_error")
+            dpg.show_item("edit_back_button")
+            dpg.show_item("edit_loading_text_error")
+
 
         threading.Thread(target=do_edit, daemon=True).start()
-        run_async(lambda: rq.edit(edit_string, 15), on_complete)
+        run_async(lambda: rq.edit(edit_string), on_complete)
         
         
 
@@ -609,6 +650,7 @@ def edit():
 
     dpg.hide_item(dpg.add_text(tag="edit_loading_text")) #loading text
     dpg.hide_item(dpg.add_button(tag="edit_back_button_error", label="back to numpad", height=20, width=-1, callback=back_to_numpad))
+    dpg.hide_item(dpg.add_button(tag="edit_back_button", label="back to edit", height=20, width=-1, callback=back_to_edit))
 
     with dpg.child_window(width=-1, height=-1, tag="edit_window", border=False):
 
