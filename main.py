@@ -1,7 +1,6 @@
 from dearpygui import dearpygui as dpg
 import time
 import threading
-from pygame import mixer
 import random
 import json
 
@@ -12,9 +11,8 @@ from modules import audioshit as sound
 from modules import imagehelpers
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "0.0.1"
+VERSION = "0.2.0"
 
-debug = True
 
 def make_theme(color1, color2, color3, color4):
     with dpg.theme() as crt_theme:
@@ -56,7 +54,7 @@ def make_theme(color1, color2, color3, color4):
     return crt_theme
 
 def set_theme(
-    color1_set=(0, 0, 0),
+    color1_set=(20, 13, 8),
     color2_set=(40, 20, 5),
     color3_set=(84, 41, 9),
     color4_set=(250, 134, 55)
@@ -79,9 +77,6 @@ dpg.create_context()
 #set theme
 set_theme()
 
-#start sound stuff
-mixer.init()
-
 #font config
 with dpg.font_registry():
     with dpg.font(locally("other/fixedsys.ttf"), 14) as default_font:
@@ -91,11 +86,18 @@ with dpg.font_registry():
 
 dpg.bind_font(default_font)
 
+#texture config mainly for noise shit
+with dpg.texture_registry():
+    initial = imagehelpers.generate_retro_boi(WIDTH, HEIGHT).convert("RGBA")
+    data = [x/255.0 for x in initial.tobytes()]
+    dpg.add_dynamic_texture(WIDTH, HEIGHT, data, tag="noise_texture")
+
 
 # --- MAIN WINDOW ---
 with dpg.window(label="x4at", tag="main_window"):
 
-    def go_through_quit(sender, app_data):
+    def go_through_quit():
+        dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
         sound.play_sound(locally("sounds/loading1.wav"))
 
         boot_text = ""
@@ -121,6 +123,7 @@ with dpg.window(label="x4at", tag="main_window"):
             settings["color3"] = state.color3
             settings["color4"] = state.color4
             settings["sfx_volume"] = sound.sfx_volume
+            settings["noise"] = state.noise
 
             json.dump(settings, file, indent=4) #saveshit
 
@@ -130,8 +133,10 @@ with dpg.window(label="x4at", tag="main_window"):
 
     dpg.add_button(tag="quit_button", label="quit", pos=(305, 5), callback=go_through_quit)
 
-    def on_tab_switch(sender, app_data):
+    def on_tab_switch(_, app_data):
         sound.play_sound(locally("sounds/click.wav"))
+        sound.play_sound(locally("sounds/switch.wav"))
+        imagehelpers.channel_switch()
 
         tab = dpg.get_item_alias(app_data) #this is supposed to unfuck it since dpg app_data sends as dpg id 
 
@@ -147,11 +152,15 @@ with dpg.window(label="x4at", tag="main_window"):
             else:
                 dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
 
+        elif tab == "edit_tab":
+            dpg.configure_viewport(0, width=WIDTH, height=HEIGHT)
+
         elif tab == "settings_tab":
             dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
 
     
     with dpg.tab_bar(tag="tab_bar", callback=on_tab_switch):
+        #modularized tabs into their own py file in v0.1.0
 
         # --- SEARCH ---
         with dpg.tab(label="search", tag="search_tab"):
@@ -165,12 +174,47 @@ with dpg.window(label="x4at", tag="main_window"):
 
         # --- EDIT ---
         with dpg.tab(label="edit", tag="edit_tab"):
-            dpg.add_text("TBA")
+            from tabs.edit import edit
+            edit()
 
         # --- SETTINGS --- 
         with dpg.tab(label="settings", tag="settings_tab"):
+            
+            with dpg.child_window(horizontal_scrollbar=True, width=-1, height=150):
+                dpg.add_text("[ THEMES ]")
+                with dpg.group(horizontal=True):
+                    class Theme:
+                        def __init__(self, name, color1, color2, color3, color4):
+                            self.name = name
+                            self.color1 = color1
+                            self.color2 = color2
+                            self.color3 = color3
+                            self.color4 = color4
+                            self.theme = make_theme(color1, color2, color3, color4)
 
-            def change_volume(sender, app_data):
+                        def change_theme(self):
+                            sound.play_sound(locally("sounds/click2.wav"))
+                            sound.play_sound(locally("sounds/beep2.wav"))
+                            set_theme(self.color1, self.color2, self.color3, self.color4)
+                            imagehelpers.channel_switch()
+
+                        def add(self):
+                            button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
+                            dpg.bind_item_theme(button, self.theme)
+
+
+                    Theme("phosphor", (20, 13, 8), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
+                    Theme("byte", (20, 35, 29), (85, 101, 81), (150, 167, 134), (215, 233, 186)).add()
+                    Theme("senno", (36, 19, 23), (75, 34, 34), (149, 68, 67), (224, 102, 101)).add()
+                    Theme("girly girl", (54, 42, 53), (112, 89, 110), (161, 127, 158), (255, 183, 197)).add()
+                    Theme("manly man", (10, 10, 13), (75, 75, 94), (139, 139, 174), (204, 204, 255)).add()
+                    Theme("emo bart", (22, 22, 22), (129, 129, 129), (27, 20, 35), (237, 237, 237)).add()
+                    Theme("cynax", (1, 4, 33), (32, 49, 107), (63, 94, 181), (94, 139, 255)).add()
+
+
+            dpg.add_separator()
+
+            def change_volume(_, app_data):
 
                 sound.play_sound(locally("sounds/scroll.wav"), max_time=50)
 
@@ -184,37 +228,15 @@ with dpg.window(label="x4at", tag="main_window"):
                 callback=change_volume
                 )
             
-            dpg.add_separator()
-            with dpg.child_window(horizontal_scrollbar=True, width=-1, height=150):
-                dpg.add_text("[ THEMES ]")
-                with dpg.group(horizontal=True):
-                    class ColorProfile:
-                        def __init__(self, name, color1, color2, color3, color4):
-                            self.name = name
-                            self.color1 = color1
-                            self.color2 = color2
-                            self.color3 = color3
-                            self.color4 = color4
-                            self.theme = make_theme(color1, color2, color3, color4)
-
-                        def change_theme(self):
-                            sound.play_sound(locally("sounds/click2.wav"))
-                            set_theme(self.color1, self.color2, self.color3, self.color4)
-
-                        def add(self):
-                            button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda sender, app_data: self.change_theme())
-                            dpg.bind_item_theme(button, self.theme)
-
-
-                    ColorProfile("phosphor", (0, 0, 0), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
-                    ColorProfile("byte", (20, 35, 29), (85, 101, 81), (150, 167, 134), (215, 233, 186)).add()
-                    ColorProfile("girly girl", (54, 42, 53), (112, 89, 110), (161, 127, 158), (255, 183, 197)).add()
-                    ColorProfile("manly man", (10, 10, 13), (75, 75, 94), (139, 139, 174), (204, 204, 255)).add()
-
+            def toggle_noise():
+                sound.play_sound(locally("sounds/switch2.wav"))
+                state.noise = not state.noise
 
             dpg.add_separator()
+
+            dpg.add_checkbox(label="retroboi", callback=toggle_noise, default_value=state.noise)
             
-            def sales_demolition(sender, app_data):
+            def sales_demolition():
                 sound.play_sound(locally("sounds/click2.wav"))
                 with dpg.window(label="kys bro", modal=True, no_close=True,
                                 no_resize=True, no_move=True,
@@ -229,6 +251,8 @@ with dpg.window(label="x4at", tag="main_window"):
                         time.sleep(0.1)
 
                 threading.Thread(target=bro_thinking, daemon=True).start()
+
+            dpg.add_separator()
 
             dpg.add_button(label="recompute base encryption hash key", callback=sales_demolition)
 
@@ -266,7 +290,7 @@ def boot_sequence():
     add_boot_text(METATEXT)
     add_boot_text(f"v{VERSION}")
 
-    #settings stuff
+    #LOAD SETTINGS
     add_boot_border("LOADING SETTINGS")
     try:
         with open(savepath('other/settings.json'), 'r', encoding='utf-8') as file:
@@ -278,11 +302,12 @@ def boot_sequence():
         except (FileNotFoundError, json.decoder.JSONDecodeError):
             add_boot_text("loading with default settings...")
             settings = {
-                "color1": [0, 0, 0],
+                "color1": [20, 13, 8],
                 "color2": [40, 20, 5],
                 "color3": [84, 41, 9],
                 "color4": [250, 134, 55],
                 "sfx_volume": 1,
+                "noise": True
             }
 
     #sfx volume
@@ -293,47 +318,23 @@ def boot_sequence():
     state.color2 = tuple(settings["color2"])
     state.color3 = tuple(settings["color3"])
     state.color4 = tuple(settings["color4"])
-    set_theme(state.color1, state.color2, state.color3, state.color4)
+    state.noise = settings["noise"]
     add_boot_text(f"color1: {state.color1}")
     add_boot_text(f"color2: {state.color2}")
     add_boot_text(f"color3: {state.color3}")
     add_boot_text(f"color4: {state.color4}")
 
+    imagehelpers.channel_switch()
+    sound.play_sound(locally("sounds/static.wav"))
+    set_theme(state.color1, state.color2, state.color3, state.color4)
+
     dpg.delete_item("logo_image")
     dpg.delete_item("logo_texture")
     
-    imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png"), state.color4).resize((50, 50)))
+    imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png")).resize((50, 50)))
     
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
-    #debug shit
-    if debug: end_boot_sequence(); return
-
-    #server connection stuff
-    add_boot_border(f"SERVER CONNECTION")
-
-    add_boot_text("trying server connection...")
-    start_time = time.perf_counter()
-    ping = rq.ping()
-    if ping == None:
-        add_boot_text("server connection failed")
-        add_boot_text("attempt 2...")
-        start_time = time.perf_counter()
-        
-    ping = rq.ping()
-    if ping == None:
-        add_boot_text("server connection failed")
-        add_boot_text("closing program...")
-        time.sleep(1)
-        dpg.stop_dearpygui()
-
-    ping_elapsed = time.perf_counter()-start_time
-
-    add_boot_text(f"X4atbackend: {ping}")
-    add_boot_text(f"ping: {1000*ping_elapsed:.2f}ms")
-    add_boot_text("sever connection verified")
-
-    add_boot_border()
 
     add_boot_text("starting main window...")
     time.sleep(0.1)
@@ -347,7 +348,31 @@ dpg.create_viewport(title="x4AllianceTerminal",
                     large_icon=locally("other/logo.ico"), 
                     width=WIDTH, height=WIDTH,
                     x_pos=1500, 
-                    always_on_top=True)
+                    always_on_top=True,
+                    min_width=WIDTH,
+                    max_width=WIDTH,
+                    min_height=WIDTH,
+                    max_height=HEIGHT) #no fullscreen no fullscreen NO FULLSCREEN NO FUCKING FULLSCREEN
+
+#more noise shit
+def animate_noise():
+    while True:
+        if state.noise:
+            dpg.show_item("noise_draw")
+            img = imagehelpers.generate_retro_boi(WIDTH, HEIGHT)
+            data = [x/255.0 for x in img.convert("RGBA").tobytes()]
+            dpg.set_value("noise_texture", data)
+
+        else:
+            dpg.hide_item("noise_draw")
+        time.sleep(0.25)
+
+with dpg.viewport_drawlist(front=True):
+    dpg.draw_image("noise_texture", (0, 0), (WIDTH, HEIGHT), tag="noise_draw")
+
+#start noise
+threading.Thread(target=animate_noise, daemon=True).start()
+
 dpg.setup_dearpygui()
 dpg.show_viewport()
 dpg.set_primary_window("startup_window", True)
@@ -355,5 +380,17 @@ dpg.set_primary_window("startup_window", True)
 dpg.hide_item("main_window")
 threading.Thread(target=boot_sequence, daemon=True).start()
 
-dpg.start_dearpygui()
+#framerate shit
+
+target_fps = 45
+frame_time = 1.0 / target_fps
+
+while dpg.is_dearpygui_running():
+    frame_start = time.perf_counter()
+    dpg.render_dearpygui_frame()
+    elapsed = time.perf_counter() - frame_start
+    sleep_time = frame_time - elapsed
+    if sleep_time > 0:
+        time.sleep(sleep_time)
+
 dpg.destroy_context()
