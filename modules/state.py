@@ -49,8 +49,6 @@ search_results_view = False
 current_get_planet = None
 current_edit_planet = None; current_edit_index = None
 
-editor_mode = False
-
 big_font = None #INITIALIZE INSIDE OF MAIN!!!!!!!
 
 with open(locally("other/fields.json"), "r") as f:

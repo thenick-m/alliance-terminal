@@ -60,6 +60,7 @@ def edit():
 
                 dpg.delete_item("discord_thinking_window")
                 dpg.hide_item("login_button")
+                dpg.show_item("log_out")
 
                 dpg.show_item("numpad_edit")
 

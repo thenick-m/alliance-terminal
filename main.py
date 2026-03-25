@@ -125,6 +125,7 @@ with dpg.window(label="x4at", tag="main_window"):
             settings["color4"] = state.color4
             settings["sfx_volume"] = sound.sfx_volume
             settings["noise"] = state.noise
+            settings["token"] = rq.discord_token if rq.discord_token else 0
 
             json.dump(settings, file, indent=4) #saveshit
 
@@ -278,7 +279,28 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_separator()
 
-            dpg.add_checkbox(label="retroboi", callback=toggle_noise, default_value=state.noise)
+            dpg.add_checkbox(label="retro effects", callback=toggle_noise, default_value=state.noise)
+
+            def log_out():
+                global settings
+
+                settings["token"] = 0
+                rq.discord_token = None
+
+                with open(savepath('other/settings.json'), 'w', encoding='utf-8') as file:
+
+                    json.dump(settings, file, indent=4)
+
+                dpg.hide_item("numpad_edit")
+                dpg.show_item("login_button")
+                dpg.hide_item("log_out")
+
+                sound.play_sound(locally("sounds/shutdown.wav"))
+                
+
+            dpg.add_separator()
+
+            dpg.hide_item(dpg.add_button(label="log out", tag="log_out", callback=log_out))
             
             def sales_demolition():
                 sound.play_sound(locally("sounds/click2.wav"))
@@ -352,9 +374,10 @@ def boot_sequence():
                 "color2": [40, 20, 5],
                 "color3": [84, 41, 9],
                 "color4": [250, 134, 55],
+                "themes": {},
                 "sfx_volume": 1,
                 "noise": True,
-                "themes": {}
+                "token": 0
             }
 
     #load custom themes
@@ -363,6 +386,14 @@ def boot_sequence():
 
     #sfx volume
     sound.sfx_volume = settings["sfx_volume"]; add_boot_text(f"sfx_volume: {sound.sfx_volume}")
+
+    #editor
+    rq.discord_token = settings["token"] if settings["token"] else None
+
+    #editor gui
+    if rq.discord_token:
+        dpg.show_item("numpad_edit")
+        dpg.hide_item("login_button")
 
     #theme colors
     state.color1 = tuple(settings["color1"])
