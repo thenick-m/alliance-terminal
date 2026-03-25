@@ -70,10 +70,10 @@ def search(stringSearchArg:str):
     return request("search", {"stringSearchArg": stringSearchArg}, polls=10)
 
 def get(planetID:str):
-    return request("get", {"planetID": planetID})
+    return request("get", {"planetID": planetID}, polls=7)
 
 def count(stringSearchArg:str):
     return request("count", {"stringSearchArg": stringSearchArg})
 
 def leaderboard():
-    return request("leaderboard")
+    return request("leaderboard", polls=10)

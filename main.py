@@ -13,6 +13,7 @@ from modules import imagehelpers
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "0.2.0"
 
+settings = {}
 
 def make_theme(color1, color2, color3, color4):
     with dpg.theme() as crt_theme:
@@ -117,7 +118,7 @@ with dpg.window(label="x4at", tag="main_window"):
         add_boot_text("saving settings...")
         
         with open(savepath('other/settings.json'), 'w', encoding='utf-8') as file:
-            settings = {}
+            global settings
             settings["color1"] = state.color1
             settings["color2"] = state.color2
             settings["color3"] = state.color3
@@ -180,9 +181,9 @@ with dpg.window(label="x4at", tag="main_window"):
         # --- SETTINGS --- 
         with dpg.tab(label="settings", tag="settings_tab"):
             
-            with dpg.child_window(horizontal_scrollbar=True, width=-1, height=150):
+            with dpg.child_window(horizontal_scrollbar=True, width=-1, height=165, tag="themes"):
                 dpg.add_text("[ THEMES ]")
-                with dpg.group(horizontal=True):
+                with dpg.group(horizontal=True, tag="weoihauipuiwfgbouirg"):
                     class Theme:
                         def __init__(self, name, color1, color2, color3, color4):
                             self.name = name
@@ -202,6 +203,9 @@ with dpg.window(label="x4at", tag="main_window"):
                             button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
                             dpg.bind_item_theme(button, self.theme)
 
+                        def add_custom(self):
+                            button = dpg.add_button(label=self.name, width=100, height=-1, parent="custom_themes", callback=lambda: self.change_theme())
+                            dpg.bind_item_theme(button, self.theme)
 
                     Theme("phosphor", (20, 13, 8), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
                     Theme("byte", (20, 35, 29), (85, 101, 81), (150, 167, 134), (215, 233, 186)).add()
@@ -211,6 +215,46 @@ with dpg.window(label="x4at", tag="main_window"):
                     Theme("emo bart", (22, 22, 22), (129, 129, 129), (27, 20, 35), (237, 237, 237)).add()
                     Theme("cynax", (1, 4, 33), (32, 49, 107), (63, 94, 181), (94, 139, 255)).add()
 
+
+                    #custom theme entry box
+                    def submit_custom_theme():
+                        global settings
+
+                        color1 = dpg.get_value("color1")
+                        color2 = dpg.get_value("color2")
+                        color3 = dpg.get_value("color3")
+                        color4 = dpg.get_value("color4")
+
+                        color1 = tuple([int(''.join(filter(str.isdigit, string))) for string in color1.split()])
+                        color2 = tuple([int(''.join(filter(str.isdigit, string))) for string in color2.split()])
+                        color3 = tuple([int(''.join(filter(str.isdigit, string))) for string in color3.split()])
+                        color4 = tuple([int(''.join(filter(str.isdigit, string))) for string in color4.split()])
+
+                        name = dpg.get_value("custom_theme_name_input")
+
+                        theme = Theme(name, color1, color2, color3, color4)
+
+                        theme.change_theme()
+                        theme.add_custom()
+
+                        settings["themes"][name] = [list(color1), list(color2), list(color3), list(color4)]
+
+
+                    with dpg.child_window(height=-1, width=200, parent="weoihauipuiwfgbouirg"):
+                        with dpg.group(horizontal=True):
+                            with dpg.group():
+                                dpg.add_input_text(tag="color1", hint="r g b (bg)", width=100)
+                                dpg.add_input_text(tag="color2", hint="r g b (mid 1)", width=100)
+                                dpg.add_input_text(tag="color3", hint="r g b (mid 2)", width=100)
+                                dpg.add_input_text(tag="color4", hint="r g b (main)", width=100)
+
+                            with dpg.group():
+                                dpg.add_input_text(hint="name", width=-1, tag="custom_theme_name_input")
+                                dpg.add_button(label="custom", width=-1, height=-1, callback=submit_custom_theme)
+
+                    with dpg.child_window(width=400, height=-1):
+                        dpg.add_text("[ CUSTOM THEMES ]")
+                        dpg.add_group(horizontal=True, tag="custom_themes")
 
             dpg.add_separator()
 
@@ -291,6 +335,8 @@ def boot_sequence():
     add_boot_text(f"v{VERSION}")
 
     #LOAD SETTINGS
+    global settings
+
     add_boot_border("LOADING SETTINGS")
     try:
         with open(savepath('other/settings.json'), 'r', encoding='utf-8') as file:
@@ -307,8 +353,13 @@ def boot_sequence():
                 "color3": [84, 41, 9],
                 "color4": [250, 134, 55],
                 "sfx_volume": 1,
-                "noise": True
+                "noise": True,
+                "themes": {}
             }
+
+    #load custom themes
+    for name, theme in settings["themes"].items():
+        Theme(name, tuple(theme[0]), tuple(theme[1]), tuple(theme[2]), tuple(theme[3])).add_custom()
 
     #sfx volume
     sound.sfx_volume = settings["sfx_volume"]; add_boot_text(f"sfx_volume: {sound.sfx_volume}")
