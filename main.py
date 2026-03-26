@@ -125,6 +125,7 @@ with dpg.window(label="x4at", tag="main_window"):
             settings["color4"] = state.color4
             settings["sfx_volume"] = sound.sfx_volume
             settings["noise"] = state.noise
+            settings["colorbars"] = state.colorbars
             settings["token"] = rq.discord_token if rq.discord_token else 0
 
             json.dump(settings, file, indent=4) #saveshit
@@ -204,18 +205,31 @@ with dpg.window(label="x4at", tag="main_window"):
                             button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
                             dpg.bind_item_theme(button, self.theme)
 
+                        def remove_custom(self):
+                            global settings
+
+                            dpg.delete_item(self.window)
+                            del settings["themes"][self.name]
+
+                            sound.play_sound(locally("sounds/submit4.wav"))
+
                         def add_custom(self):
-                            button = dpg.add_button(label=self.name, width=100, height=-1, parent="custom_themes", callback=lambda: self.change_theme())
-                            dpg.bind_item_theme(button, self.theme)
+                            with dpg.child_window(parent="custom_themes", width=150) as window:
+
+                                with dpg.group(horizontal=True):
+
+                                    dpg.add_button(label="X", width=20, height=-1, callback=self.remove_custom)
+                                    button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
+                                    self.window = window
+                                    dpg.bind_item_theme(button, self.theme)
+
 
                     Theme("phosphor", (20, 13, 8), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
                     Theme("byte", (20, 35, 29), (85, 101, 81), (150, 167, 134), (215, 233, 186)).add()
-                    Theme("senno", (36, 19, 23), (75, 34, 34), (149, 68, 67), (224, 102, 101)).add()
+                    Theme("gold", (50, 25, 0), (100, 50, 25), (200, 100, 50), (255, 200, 100)).add()
                     Theme("girly girl", (54, 42, 53), (112, 89, 110), (161, 127, 158), (255, 183, 197)).add()
                     Theme("manly man", (10, 10, 13), (75, 75, 94), (139, 139, 174), (204, 204, 255)).add()
                     Theme("emo bart", (22, 22, 22), (129, 129, 129), (27, 20, 35), (237, 237, 237)).add()
-                    Theme("cynax", (1, 4, 33), (32, 49, 107), (63, 94, 181), (94, 139, 255)).add()
-
 
                     #custom theme entry box
                     def submit_custom_theme():
@@ -253,7 +267,7 @@ with dpg.window(label="x4at", tag="main_window"):
                                 dpg.add_input_text(hint="name", width=-1, tag="custom_theme_name_input")
                                 dpg.add_button(label="custom", width=-1, height=-1, callback=submit_custom_theme)
 
-                    with dpg.child_window(width=400, height=-1):
+                    with dpg.child_window(horizontal_scrollbar=True, width=400, height=-1):
                         dpg.add_text("[ CUSTOM THEMES ]")
                         dpg.add_group(horizontal=True, tag="custom_themes")
 
@@ -266,6 +280,7 @@ with dpg.window(label="x4at", tag="main_window"):
                 sound.sfx_volume = app_data
 
             dpg.add_slider_float(
+                tag="sfx_volume_slider",
                 label="sfx volume",
                 default_value=1,
                 min_value=0,
@@ -279,7 +294,15 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_separator()
 
-            dpg.add_checkbox(label="retro effects", callback=toggle_noise, default_value=state.noise)
+            dpg.add_checkbox(tag="retro_effects_toggle", label="retro effects", callback=toggle_noise, default_value=state.noise)
+
+            def toggle_color_bars():
+                sound.play_sound(locally("sounds/switch2.wav"))
+                state.colorbars = not state.colorbars
+
+            dpg.add_separator()
+
+            dpg.add_checkbox(tag="colorbars_toggle", label="colored resource bars", callback=toggle_color_bars, default_value=state.colorbars)
 
             def log_out():
                 global settings
@@ -377,6 +400,7 @@ def boot_sequence():
                 "themes": {},
                 "sfx_volume": 1,
                 "noise": True,
+                "colorbars": False,
                 "token": 0
             }
 
@@ -386,6 +410,7 @@ def boot_sequence():
 
     #sfx volume
     sound.sfx_volume = settings["sfx_volume"]; add_boot_text(f"sfx_volume: {sound.sfx_volume}")
+    dpg.set_value("sfx_volume_slider", sound.sfx_volume)
 
     #editor
     rq.discord_token = settings["token"] if settings["token"] else None
@@ -400,11 +425,18 @@ def boot_sequence():
     state.color2 = tuple(settings["color2"])
     state.color3 = tuple(settings["color3"])
     state.color4 = tuple(settings["color4"])
-    state.noise = settings["noise"]
     add_boot_text(f"color1: {state.color1}")
     add_boot_text(f"color2: {state.color2}")
     add_boot_text(f"color3: {state.color3}")
     add_boot_text(f"color4: {state.color4}")
+
+    #noise
+    state.noise = settings["noise"]
+    dpg.set_value("retro_effects_toggle", state.noise)
+
+    #colorbars
+    state.colorbars = settings["colorbars"]
+    dpg.set_value("colorbars_toggle", state.colorbars)
 
     imagehelpers.channel_switch()
     sound.play_sound(locally("sounds/static.wav"))
