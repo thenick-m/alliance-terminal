@@ -1,28 +1,28 @@
 {
     "color1": [
         20,
-        35,
-        29
+        13,
+        8
     ],
     "color2": [
-        85,
-        101,
-        81
+        40,
+        20,
+        5
     ],
     "color3": [
-        150,
-        167,
-        134
+        84,
+        41,
+        9
     ],
     "color4": [
-        215,
-        233,
-        186
+        250,
+        134,
+        55
     ],
     "themes": {},
     "lang": "en",
     "sfx_volume": 1.0,
     "noise": true,
     "colorbars": false,
-    "token": "MTQ1NDM3MTQwMDg3Njk0OTU3Ng.SDy4IyGHwq0KaX6NVSOPURoP3JXPmH"
+    "token": 0
 }

@@ -287,16 +287,25 @@ with dpg.window(label="x4at", tag="main_window"):
             dpg.add_separator()
 
             def change_lang(sender):
-                state.lang = sender.split("...")[0]
+                global settings
+                target_lang = sender.split("...")[0]
+                state.lang = target_lang
+                settings["lang"] = target_lang
+                
                 reload_strings()
+                
                 sound.play_sound(locally("sounds/switch2.wav"))
                 sound.play_sound(locally("sounds/error2.wav"))
+
+                with open(savepath('other/settings.json'), 'w', encoding='utf-8') as file:
+
+                    json.dump(settings, file, indent=4)
 
                 with dpg.window(label=t("restart"), modal=True, no_close=True,
                                 no_resize=True, no_move=True,
                                 tag="lang_window",
                                 pos=(WIDTH//2 - 80, WIDTH//2 - 30)):
-                    dpg.add_text(t("Restart program for lang change to take effect"), tag="lang_text")
+                    dpg.add_text(t("Restart program for lang change to take effect"), tag="lang_text", wrap=100)
 
                 time.sleep(4)
 
@@ -311,7 +320,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     files = [entry for entry in p.iterdir() if entry.is_file()]
 
                     for file in files:
-                        dpg.add_button(tag=f"{file.stem}...lang_change", label=file.stem, width=100, height=50, callback=change_lang)
+                        dpg.add_button(tag=f"{file.stem}...lang_change", label=file.stem, width=50, height=50, callback=change_lang)
 
                         
 
