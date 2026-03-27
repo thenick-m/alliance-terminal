@@ -44,7 +44,7 @@ def populate_get_tab(planet):
     dpg.delete_item("get_tab_content", children_only=True) #clear
 
     if not planet:
-        dpg.add_text("No planet selected", parent="get_tab_content")
+        dpg.add_text(t("No planet selected"), parent="get_tab_content")
         return
 
     #separate data
@@ -87,25 +87,25 @@ def populate_get_tab(planet):
     if rq.discord_token:
         with dpg.group(horizontal=True, parent="get_tab_content"):
             dpg.add_text(f"{name}", tag="planet_name_header")
-            dpg.add_button(label="quick edit", tag=f"{index}...edit_call", width=-1, height=25, callback=edit_call)
+            dpg.add_button(label=t("quick edit"), tag=f"{index}...edit_call", width=-1, height=25, callback=edit_call)
     else:
         dpg.add_text(f"{name}", tag="planet_name_header", parent="get_tab_content")
 
     dpg.bind_item_font("planet_name_header", big_font)
-    dpg.add_text(f"Star {star_id}  |  Planet {planet_id}/{planet_count}  |  Index {index}", 
+    dpg.add_text(f"{t("Star")} {star_id}  |  {t("Planet")} {planet_id}/{planet_count}  |  {t("Index")} {index}", 
                 parent="get_tab_content")
     dpg.add_separator(parent="get_tab_content")
 
     #physical stats list
     stats_graph = dpg.add_child_window(parent="get_tab_content", width=-1, height=200, border=True)
-    dpg.add_text("[ PHYSICAL ]", parent=stats_graph)
+    dpg.add_text(t("[ PHYSICAL ]"), parent=stats_graph)
     dpg.add_separator(parent=stats_graph)
     for key, val in physical.items():
         if val is not None:
             dpg.add_text(f"{key:<10} {val}", parent=stats_graph)
 
     dpg.add_text("", parent=stats_graph)
-    dpg.add_text("[ ENVIRONMENT ]", parent=stats_graph)
+    dpg.add_text(t("[ ENVIRONMENT ]"), parent=stats_graph)
     dpg.add_separator(parent=stats_graph)
     for key, val in environment.items():
         if val is not None:
@@ -113,7 +113,7 @@ def populate_get_tab(planet):
             dpg.add_text(f"{key:<10} {display}", parent=stats_graph)
 
     dpg.add_text("", parent=stats_graph)
-    dpg.add_text("[ OTHER ]", parent=stats_graph)
+    dpg.add_text(t("[ OTHER ]"), parent=stats_graph)
     dpg.add_separator(parent=stats_graph)
     for key, val in other.items():
         if val is not None:
@@ -127,7 +127,7 @@ def populate_get_tab(planet):
 
     #header with toggle button
     header_group = dpg.add_group(horizontal=True, parent=resource_graph)
-    dpg.add_text("[ RESOURCES ]", parent=header_group)
+    dpg.add_text(t("[ RESOURCES ]"), parent=header_group)
     dpg.add_button(label="text", tag="resource_toggle", parent=header_group, width=-1,
                 callback=lambda: toggle_resource_view(numeric_resources))
     
@@ -139,13 +139,13 @@ def populate_get_tab(planet):
         sound.play_sound(locally("sounds/click2.wav"))
         if resource_view[0] == "graph":
             resource_view[0] = "text"
-            dpg.set_item_label("resource_toggle", "graph")
+            dpg.set_item_label("resource_toggle", t("graph"))
             dpg.hide_item("resource_plot_container")
             dpg.show_item("resource_text_container")
             dpg.hide_item("get_legend")
         else:
             resource_view[0] = "graph"
-            dpg.set_item_label("resource_toggle", "text")
+            dpg.set_item_label("resource_toggle", t("text"))
             dpg.show_item("resource_plot_container")
             dpg.hide_item("resource_text_container")
             dpg.show_item("get_legend")
@@ -197,9 +197,9 @@ def populate_get_tab(planet):
         dpg.set_axis_limits("get_x_axis", -0.5, len(all_fields) - 0.5)
         dpg.fit_axis_data("get_y_axis")
         legend_group = dpg.add_group(horizontal=True, parent=resource_graph)
-        dpg.add_text("[half-shaded] = Unknown\n[fully-shaded] = Known", parent=legend_group, tag="get_legend")
+        dpg.add_text(f"{t("[half-shaded]")} = {t("Unknown")}\n{t("[fully-shaded]")} = {t("Known")}", parent=legend_group, tag="get_legend")
     else:
-            dpg.add_text(f"No resources logged", parent=resource_plot_container)
+            dpg.add_text(t("No resources logged"), parent=resource_plot_container)
 
 
     #text container
@@ -209,17 +209,17 @@ def populate_get_tab(planet):
             display = "present" if val in ["Present", "present"] else str(val)
             dpg.add_text(f"{key:<12} {display}", parent=resource_text_container)
     else:
-            dpg.add_text(f"No resources logged", parent=resource_text_container)
+            dpg.add_text(t("No resources logged"), parent=resource_text_container)
 
     #deposits
     dpg.add_separator(parent="get_tab_content")
     deposit_container = dpg.add_child_window(parent="get_tab_content", height=60)
-    dpg.add_text("[ DEPOSITS ]", parent=deposit_container)
+    dpg.add_text(t("[ DEPOSITS ]"), parent=deposit_container)
     bool_group = dpg.add_group(parent=deposit_container)
     if deposit_resources:
         dpg.add_text("".join([f"{key}, " for key in deposit_resources.keys()]), parent=bool_group)
     else:
-        dpg.add_text(f"None", parent=bool_group)
+        dpg.add_text(t("None"), parent=bool_group)
 
     state.current_get_planet = planet
     switch_get_view()
@@ -257,7 +257,7 @@ def get():
             dpg.show_item("get_loading_text")
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             while not done[0]:
-                dpg.set_value("get_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("get_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
             sound.play_sound(locally("sounds/receipt.wav"))
@@ -272,7 +272,7 @@ def get():
                 dpg.set_value("get_loading_text", text)
 
             if result == None:
-                set_text("couldn't contact server")
+                set_text(t("couldn't contact server"))
             elif 'error' in result.keys():
                 set_text(f"{result['error']}")
             else:
@@ -291,13 +291,13 @@ def get():
         threading.Thread(target=do_get, daemon=True).start()
         run_async(lambda: rq.get(index), on_complete)
 
-    dpg.bind_item_font(dpg.add_text("ERROR", tag="get_loading_text_error"), state.big_font)
+    dpg.bind_item_font(dpg.add_text(t("ERROR"), tag="get_loading_text_error"), state.big_font)
     dpg.hide_item("get_loading_text_error")
         
     dpg.hide_item(dpg.add_text(tag="get_loading_text", parent="get_tab"))
 
     with dpg.child_window(tag="numpad", width=-1, height=230):
-        dpg.add_input_text(tag="planet_id_input", hint="index", width=-1)
+        dpg.add_input_text(tag="planet_id_input", hint=t("index"), width=-1)
 
         with dpg.group(horizontal=True):
 
@@ -319,7 +319,7 @@ def get():
                         dpg.add_button(tag=f"{num}", label=num, width=55, height=44,
                                     callback=numpad_press)
             
-            dpg.add_button(label="submit", width=-1, height=-1, callback=submit_get)
+            dpg.add_button(label=t("submit"), width=-1, height=-1, callback=submit_get)
 
     
     #make button for returning to numpad

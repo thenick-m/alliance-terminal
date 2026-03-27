@@ -1,4 +1,5 @@
 from dearpygui import dearpygui as dpg
+from pathlib import Path
 import time
 import threading
 import random
@@ -14,6 +15,15 @@ METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "1.0.0 Alpha"
 
 settings = {}
+
+#load langs
+try:
+    with open(savepath('other/settings.json'), 'r', encoding='utf-8') as file:
+        settings = json.load(file)
+        state.lang = settings["lang"]
+        state.reload_strings()
+except (FileNotFoundError, json.decoder.JSONDecodeError):
+    print("shit")
 
 def make_theme(color1, color2, color3, color4):
     with dpg.theme() as crt_theme:
@@ -83,7 +93,7 @@ set_theme()
 #font config
 with dpg.font_registry():
     with dpg.font(locally("other/fixedsys.ttf"), 14) as default_font:
-        pass
+        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
     with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
         state.big_font = big_font
 
@@ -117,7 +127,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
         #actually do stuff
 
-        add_boot_text("saving settings...")
+        add_boot_text(t("saving settings..."))
         
         with open(savepath('other/settings.json'), 'w', encoding='utf-8') as file:
             global settings
@@ -125,6 +135,7 @@ with dpg.window(label="x4at", tag="main_window"):
             settings["color2"] = state.color2
             settings["color3"] = state.color3
             settings["color4"] = state.color4
+            settings["lang"] = state.lang
             settings["sfx_volume"] = sound.sfx_volume
             settings["noise"] = state.noise
             settings["colorbars"] = state.colorbars
@@ -132,11 +143,11 @@ with dpg.window(label="x4at", tag="main_window"):
 
             json.dump(settings, file, indent=4) #saveshit
 
-        add_boot_text("shutting down program...")
+        add_boot_text(t("shutting down program..."))
         time.sleep(0.5)
         dpg.stop_dearpygui()
 
-    dpg.add_button(tag="quit_button", label="quit", pos=(305, 5), callback=go_through_quit)
+    dpg.add_button(tag="quit_button", label=t("quit"), pos=(305, 5), callback=go_through_quit)
 
     def on_tab_switch(_, app_data):
         sound.play_sound(locally("sounds/click.wav"))
@@ -168,25 +179,25 @@ with dpg.window(label="x4at", tag="main_window"):
         #modularized tabs into their own py file in v0.1.0
 
         # --- SEARCH ---
-        with dpg.tab(label="search", tag="search_tab"):
+        with dpg.tab(label=t("search"), tag="search_tab"):
             from tabs.search import search
             search()
 
         # --- GET --- 
-        with dpg.tab(label="get", tag="get_tab"):
+        with dpg.tab(label=t("get"), tag="get_tab"):
             from tabs.get import get
             get()            
 
         # --- EDIT ---
-        with dpg.tab(label="edit", tag="edit_tab"):
+        with dpg.tab(label=t("edit"), tag="edit_tab"):
             from tabs.edit import edit
             edit()
 
         # --- SETTINGS --- 
-        with dpg.tab(label="settings", tag="settings_tab"):
+        with dpg.tab(label=t("settings"), tag="settings_tab"):
             
             with dpg.child_window(horizontal_scrollbar=True, width=-1, height=165, tag="themes"):
-                dpg.add_text("[ THEMES ]")
+                dpg.add_text(t("[ THEMES ]"))
                 with dpg.group(horizontal=True, tag="weoihauipuiwfgbouirg"):
                     class Theme:
                         def __init__(self, name, color1, color2, color3, color4):
@@ -266,12 +277,43 @@ with dpg.window(label="x4at", tag="main_window"):
                                 dpg.add_input_text(tag="color4", hint="r g b (main)", width=100)
 
                             with dpg.group():
-                                dpg.add_input_text(hint="name", width=-1, tag="custom_theme_name_input")
-                                dpg.add_button(label="custom", width=-1, height=-1, callback=submit_custom_theme)
+                                dpg.add_input_text(hint=t("name"), width=-1, tag="custom_theme_name_input")
+                                dpg.add_button(label=t("custom"), width=-1, height=-1, callback=submit_custom_theme)
 
                     with dpg.child_window(horizontal_scrollbar=True, width=400, height=-1):
-                        dpg.add_text("[ CUSTOM THEMES ]")
+                        dpg.add_text(t("[ CUSTOM THEMES ]"))
                         dpg.add_group(horizontal=True, tag="custom_themes")
+
+            dpg.add_separator()
+
+            def change_lang(sender):
+                state.lang = sender.split("...")[0]
+                reload_strings()
+                sound.play_sound(locally("sounds/switch2.wav"))
+                sound.play_sound(locally("sounds/error2.wav"))
+
+                with dpg.window(label=t("restart"), modal=True, no_close=True,
+                                no_resize=True, no_move=True,
+                                tag="lang_window",
+                                pos=(WIDTH//2 - 80, WIDTH//2 - 30)):
+                    dpg.add_text(t("Restart program for lang change to take effect"), tag="lang_text")
+
+                time.sleep(4)
+
+                dpg.delete_item("lang_window")
+            
+            with dpg.child_window(horizontal_scrollbar=True):
+                dpg.add_text(t("[ LANGUAGES ]"))
+                with dpg.group(horizontal=True):
+                    p = Path(locally("other/lang/."))
+
+                    #filter only files
+                    files = [entry for entry in p.iterdir() if entry.is_file()]
+
+                    for file in files:
+                        dpg.add_button(tag=f"{file.stem}...lang_change", label=file.stem, width=100, height=50, callback=change_lang)
+
+                        
 
             dpg.add_separator()
 
@@ -283,7 +325,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_slider_float(
                 tag="sfx_volume_slider",
-                label="sfx volume",
+                label=t("sfx volume"),
                 default_value=1,
                 min_value=0,
                 max_value=1,
@@ -296,7 +338,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_separator()
 
-            dpg.add_checkbox(tag="retro_effects_toggle", label="retro effects", callback=toggle_noise, default_value=state.noise)
+            dpg.add_checkbox(tag="retro_effects_toggle", label=t("retro effects"), callback=toggle_noise, default_value=state.noise)
 
             def toggle_color_bars():
                 sound.play_sound(locally("sounds/switch2.wav"))
@@ -304,7 +346,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_separator()
 
-            dpg.add_checkbox(tag="colorbars_toggle", label="colored resource bars", callback=toggle_color_bars, default_value=state.colorbars)
+            dpg.add_checkbox(tag="colorbars_toggle", label=t("colored resource bars"), callback=toggle_color_bars, default_value=state.colorbars)
 
             def log_out():
                 global settings
@@ -325,27 +367,27 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_separator()
 
-            dpg.hide_item(dpg.add_button(label="log out", tag="log_out", callback=log_out))
+            dpg.hide_item(dpg.add_button(label=t("log out"), tag="log_out", callback=log_out))
             
             def sales_demolition():
                 sound.play_sound(locally("sounds/click2.wav"))
-                with dpg.window(label="kys bro", modal=True, no_close=True,
+                with dpg.window(label=t("kys bro"), modal=True, no_close=True,
                                 no_resize=True, no_move=True,
                                 tag="thinking_window",
                                 pos=(WIDTH//2 - 80, WIDTH//2 - 30)):
-                    dpg.add_text("thinking...", tag="thinking_text")
+                    dpg.add_text(f"{t("thinking")}...", tag="thinking_text")
 
                 def bro_thinking():
                     while True:
                         dots = "." * (int(time.perf_counter() * 2) % 4)
-                        dpg.set_value("thinking_text", f"thinking{dots}")
+                        dpg.set_value("thinking_text", f"{t("thinking")}{dots}")
                         time.sleep(0.1)
 
                 threading.Thread(target=bro_thinking, daemon=True).start()
 
             dpg.add_separator()
 
-            dpg.add_button(label="recompute base encryption hash key", callback=sales_demolition)
+            dpg.add_button(label=t("recompute base encryption hash key"), callback=sales_demolition)
 
 # --- startup sequence --- 
 with dpg.window(tag="startup_window"):
@@ -384,7 +426,7 @@ def boot_sequence():
     #LOAD SETTINGS
     global settings
 
-    add_boot_border("LOADING SETTINGS")
+    add_boot_border(t("LOADING SETTINGS"))
     try:
         with open(savepath('other/settings.json'), 'r', encoding='utf-8') as file:
             settings = json.load(file)
@@ -393,13 +435,14 @@ def boot_sequence():
             with open(locally('other/settings.json'), 'r', encoding='utf-8') as file:
                 settings = json.load(file)
         except (FileNotFoundError, json.decoder.JSONDecodeError):
-            add_boot_text("loading with default settings...")
+            add_boot_text(t("loading with default settings..."))
             settings = {
                 "color1": [20, 13, 8],
                 "color2": [40, 20, 5],
                 "color3": [84, 41, 9],
                 "color4": [250, 134, 55],
                 "themes": {},
+                "lang": "en",
                 "sfx_volume": 1,
                 "noise": True,
                 "colorbars": False,
@@ -411,7 +454,7 @@ def boot_sequence():
         Theme(name, tuple(theme[0]), tuple(theme[1]), tuple(theme[2]), tuple(theme[3])).add_custom()
 
     #sfx volume
-    sound.sfx_volume = settings["sfx_volume"]; add_boot_text(f"sfx_volume: {sound.sfx_volume}")
+    sound.sfx_volume = settings["sfx_volume"]; add_boot_text(f"{t("sfx_volume")}: {sound.sfx_volume}")
     dpg.set_value("sfx_volume_slider", sound.sfx_volume)
 
     #editor
@@ -431,6 +474,9 @@ def boot_sequence():
     add_boot_text(f"color2: {state.color2}")
     add_boot_text(f"color3: {state.color3}")
     add_boot_text(f"color4: {state.color4}")
+
+    #lang
+    state.lang = settings["lang"]
 
     #noise
     state.noise = settings["noise"]
@@ -452,7 +498,7 @@ def boot_sequence():
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
 
-    add_boot_text("starting main window...")
+    add_boot_text(t("starting main window..."))
     time.sleep(0.1)
     
     time.sleep(0.5)

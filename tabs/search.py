@@ -162,7 +162,7 @@ def search():
             sound.play_sound(locally("sounds/reciept1.wav"))
             sound.play_sound(locally("sounds/success.wav"))
 
-            dpg.set_value("search_loading_text", f"{len(results)} results {'(MAX)' if len(results) == 100 else ''}")
+            dpg.set_value("search_loading_text", f"{len(results)} {t("results")} {f'({t("MAX")})' if len(results) == 100 else ''}")
             dpg.show_item("results_panel")
             dpg.show_item("back_button")
             dpg.delete_item("results_panel", children_only=True)
@@ -190,7 +190,7 @@ def search():
                 child = dpg.add_child_window(parent="results_panel", width=300, height=400, border=True, tag=f"result_{i}")
 
                 dpg.add_text(
-                    f"{result[0]} {result[1].get('Name', 'No Name')}",
+                    f"{result[0]} {result[1].get('Name', t('No Name'))}",
                     parent=child,
                     wrap=180,
                     tag=f"{result[0]}_result_title"
@@ -211,7 +211,7 @@ def search():
                     populate_get_tab(results_dict[sender])  #sets state.current_get_planet internally
                     dpg.set_value("tab_bar", "get_tab")
 
-                dpg.add_button(label="get", width=80, height=300, tag=f"{result[0]}", parent=child, pos=(210, 10),
+                dpg.add_button(label=t("get"), width=80, height=300, tag=f"{result[0]}", parent=child, pos=(210, 10),
                             callback=change_get_planet)
                 
             dpg.configure_viewport(0, width=WIDTH, height=HEIGHT)
@@ -219,7 +219,7 @@ def search():
         def do_search():
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             while not done[0]:
-                dpg.set_value("search_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("search_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
 
@@ -232,7 +232,7 @@ def search():
                 dpg.set_value("search_loading_text", text)
 
             if result == None:
-                set_text("couldn't contact server")
+                set_text(t("couldn't contact server"))
             elif 'error' in result.keys():
                 set_text(f"{result['error']}")
             else:
@@ -257,7 +257,7 @@ def search():
     #UI
     with dpg.group(parent="search_tab"):
         
-        dpg.bind_item_font(dpg.add_text("ERROR", tag="search_loading_text_error"), state.big_font)
+        dpg.bind_item_font(dpg.add_text(t("ERROR"), tag="search_loading_text_error"), state.big_font)
         dpg.hide_item("search_loading_text_error")
 
         dpg.add_text(tag="search_loading_text")
@@ -266,7 +266,7 @@ def search():
         with dpg.child_window(tag="results_panel", width=-1, height=570, border=True):
             dpg.hide_item("results_panel")
 
-        dpg.add_button(label="back", tag="back_button",
+        dpg.add_button(label=t("back"), tag="back_button",
                     callback=switch_search_view,
                     width=-1,
                     height=20)
@@ -277,13 +277,13 @@ def search():
                             callback=on_condition_click,
                             width=200, num_items=9)
             
-            dpg.add_button(label="submit", tag="submit_button",
+            dpg.add_button(label=t("submit"), tag="submit_button",
                         callback=submit_search,
                         width=100,
                         height=170)
 
         dpg.add_input_text(tag="query_input", #query
-                        hint="<field> <operator> <value>",
+                        hint=t("<field> <operator> <value>"),
                         callback=on_input_change,
                         on_enter=True,
                         width=200)

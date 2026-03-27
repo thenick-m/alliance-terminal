@@ -19,7 +19,7 @@ def edit():
                         pos=(WIDTH//2 - 90, WIDTH//2 - 30),
                         min_size=(150, 150),
                         max_size=(150, 150)):
-            dpg.add_text("Verify through discord on your web browser to confirm your enrollment.",
+            dpg.add_text(t("Verify through discord on your web browser to confirm your enrollment."),
                             tag="login_loading_text",
                             wrap=150)
 
@@ -40,16 +40,16 @@ def edit():
                 dpg.set_value("login_loading_text", text)
 
             if result == None:
-                set_text("ERROR: couldn't contact server")
+                set_text(f"{t("ERROR")}: {t("couldn't contact server")}")
             elif result == False:
-                set_text("ERROR: login failed")
+                set_text(f"{t("ERROR")}: {t("login failed")}")
             elif 'error' in result.keys():
-                set_text(f"ERROR: {result['error']}")
+                set_text(f"{t("ERROR")}: {result['error']}")
             elif not result['is_editor']:
-                set_text("ERROR: you are not enrolled")
+                set_text(f"{t("ERROR")}: {t("you are not enrolled")}")
             else:
                 print(result)
-                set_text(f"Welcome, {result["username"]}")
+                set_text(f"{t("Welcome")}, {result["username"]}")
                 sound.play_sound(locally("sounds/shutdown.wav"))
                 sound.play_sound(locally("sounds/welcome.wav"))
 
@@ -100,7 +100,7 @@ def edit():
             loading_sound = sound.play_sound(locally("sounds/loading1.wav"))
             while not done[0]:
 
-                dpg.set_value("leaderboard_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("leaderboard_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
             sound.play_sound(locally("sounds/receipt.wav"))
@@ -114,16 +114,16 @@ def edit():
                 dpg.set_value("leaderboard_loading_text", text)
 
             if result == None:
-                set_text("ERROR: couldn't contact server")
+                set_text(f"{t("ERROR")}: {t("couldn't contact server")}")
             elif 'error' in result.keys():
-                set_text(f"ERROR: {result['error']}")
+                set_text(f"{t("ERROR")}: {result['error']}")
             else:
 
                 for i, user in enumerate(result["leaderboard"]):
                     dpg.add_separator(parent="leaderboard_entries")
 
                     place = dpg.add_text(f"{i+1}: {user["username"]}", parent="leaderboard_entries")
-                    dpg.add_text(f"Contributions: {user["contributions"]}", parent="leaderboard_entries")
+                    dpg.add_text(f"{t("Contributions")}: {user["contributions"]}", parent="leaderboard_entries")
 
                     dpg.add_separator(parent="leaderboard_entries")
                     if i < 3:
@@ -172,7 +172,7 @@ def edit():
         switch_edit_view()
 
         dpg.hide_item("edit_loading_text_error")
-        dpg.set_value("edit_loading_text_error", "ERROR")
+        dpg.set_value("edit_loading_text_error", f"{t("ERROR")}")
 
         dpg.hide_item("edit_back_button_error")
         dpg.hide_item("edit_back_button")
@@ -185,7 +185,7 @@ def edit():
         dpg.hide_item("edit_back_button")
         
         dpg.hide_item("edit_loading_text_error")
-        dpg.set_value("edit_loading_text_error", "ERROR")
+        dpg.set_value("edit_loading_text_error", f"{t("ERROR")}")
 
         dpg.show_item("edit_window")
         dpg.show_item("back_edit")
@@ -197,7 +197,7 @@ def edit():
     def delete_field(field, tag):
         sound.play_sound(locally("sounds/submit4.wav"))
         dpg.delete_item(tag)
-        print(f"deleting item {tag}")
+        print(f"{t("deleting item")} {tag}")
         edit_args.pop(field, None)
         new_field_args.pop(field, None)
         
@@ -214,7 +214,7 @@ def edit():
 
             def woatfhalb():
                 dpg.show_item("edit_loading_text")
-                dpg.set_value("edit_loading_text", "Index doesn't exist, client-side template:")
+                dpg.set_value("edit_loading_text", t("Index doesn't exist, client-side template:"))
                 time.sleep(3)
                 dpg.hide_item("edit_loading_text")
 
@@ -225,7 +225,7 @@ def edit():
         dpg.delete_item("edit_fields", children_only=True)
 
         #fill edit_fields
-        dpg.add_text("[ NEW FIELDS ]", parent="edit_fields")
+        dpg.add_text(t("[ NEW FIELDS ]"), parent="edit_fields")
 
         dpg.add_separator(parent="edit_fields")
         dpg.add_separator(parent="edit_fields")
@@ -262,7 +262,7 @@ def edit():
         dpg.add_separator(parent="edit_fields")
         dpg.add_separator(parent="edit_fields")
 
-        dpg.add_text("[ PHYSICAL ]", parent="edit_fields")
+        dpg.add_text(t("[ PHYSICAL ]"), parent="edit_fields")
         if physical:
             for field, result in physical.items():
                 if result is not None:
@@ -273,14 +273,14 @@ def edit():
                                         user_data=(field, tag),
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
-                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        edit_args[field] = dpg.add_input_text(hint=t("any"), width=-1, pos=(120, 5))
                         original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
         dpg.add_separator(parent="edit_fields")
         dpg.add_separator(parent="edit_fields")
 
-        dpg.add_text("[ ENVIRONMENT ]", parent="edit_fields")
+        dpg.add_text(t("[ ENVIRONMENT ]"), parent="edit_fields")
         if environment:
             for field, result in environment.items():
                 if result is not None:
@@ -291,14 +291,14 @@ def edit():
                                         user_data=(field, tag),
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
-                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        edit_args[field] = dpg.add_input_text(hint=t("any"), width=-1, pos=(120, 5))
                         original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
         dpg.add_separator(parent="edit_fields")
         dpg.add_separator(parent="edit_fields")
 
-        dpg.add_text("[ OTHER ]", parent="edit_fields")
+        dpg.add_text(t("[ OTHER ]"), parent="edit_fields")
         if other:
             for field, result in other.items():
                 if result is not None:
@@ -309,14 +309,14 @@ def edit():
                                         user_data=(field, tag),
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
-                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        edit_args[field] = dpg.add_input_text(hint=t("any"), width=-1, pos=(120, 5))
                         original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
         dpg.add_separator(parent="edit_fields")
         dpg.add_separator(parent="edit_fields")
 
-        dpg.add_text("[ RESOURCES ]", parent="edit_fields")
+        dpg.add_text(t("[ RESOURCES ]"), parent="edit_fields")
         if numeric_resources:
             for field, result in numeric_resources.items():
                 if result is not None:
@@ -327,14 +327,14 @@ def edit():
                                         user_data=(field, tag),
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
-                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        edit_args[field] = dpg.add_input_text(hint=t("any"), width=-1, pos=(120, 5))
                         original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
         dpg.add_separator(parent="edit_fields")
         dpg.add_separator(parent="edit_fields")
 
-        dpg.add_text("[ DEPOSITS ]", parent="edit_fields")
+        dpg.add_text(t("[ DEPOSITS ]"), parent="edit_fields")
         if deposit_resources:
             for field, result in deposit_resources.items():
                 if result is not None:
@@ -345,7 +345,7 @@ def edit():
                                         user_data=(field, tag),
                                         callback=lambda s, a, u: delete_field(u[0], u[1]))
                             dpg.add_text(field)
-                        edit_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(120, 5))
+                        edit_args[field] = dpg.add_input_text(hint=t("any"), width=-1, pos=(120, 5))
                         original_fields.add(field)
                         dpg.set_value(edit_args[field], result)
 
@@ -380,7 +380,7 @@ def edit():
             dpg.show_item("edit_loading_text")
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             while not done[0]:
-                dpg.set_value("edit_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("edit_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
             sound.play_sound(locally("sounds/receipt.wav"))
@@ -396,9 +396,9 @@ def edit():
 
             print(result)
             if result == None:
-                set_text("couldn't contact server")
+                set_text(t("couldn't contact server"))
             elif 'error' in result.keys():
-                if result['error'] == 'no matches found': #no planet found
+                if result['error'] == t('no matches found'): #no planet found
                     populate_edit_tab(1)
                     switch_edit_view()
                     state.current_edit_index = index
@@ -470,7 +470,7 @@ def edit():
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             dpg.show_item("edit_loading_text")
             while not done[0]:
-                dpg.set_value("edit_loading_text", f"POLLING... {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("edit_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
 
@@ -483,7 +483,7 @@ def edit():
                 dpg.set_value("edit_loading_text", text)
 
             if result == None:
-                set_text("couldn't contact server")
+                set_text(t("couldn't contact server"))
             elif 'error' in result.keys():
                 set_text(f"{result['error']}")
             else:
@@ -495,14 +495,14 @@ def edit():
                 dpg.show_item("edit_back_button_error")
                 dpg.show_item("edit_back_button")
 
-                dpg.set_value("edit_loading_text_error", "SUCCESS")
+                dpg.set_value("edit_loading_text_error", t("SUCCESS"))
                 dpg.show_item("edit_loading_text_error")
 
                 def waluifhruifb():
                     for _ in range(10):
-                        dpg.set_value("edit_loading_text_error", "SUCCESS !!!")
+                        dpg.set_value("edit_loading_text_error", f"{t("SUCCESS")} !!!")
                         time.sleep(0.5)
-                        dpg.set_value("edit_loading_text_error", "SUCCESS")
+                        dpg.set_value("edit_loading_text_error", t("SUCCESS"))
                         time.sleep(0.5)
 
                 threading.Thread(target=waluifhruifb, daemon=True).start()
@@ -568,7 +568,7 @@ def edit():
                 dpg.focus_item("add_field_edit")
 
                 dpg.show_item("edit_loading_text")
-                dpg.set_value("edit_loading_text", "ERROR: field already present")
+                dpg.set_value("edit_loading_text", f"{t("ERROR")}: {t("field already present")}")
                 time.sleep(3)
                 dpg.hide_item("edit_loading_text") 
             threading.Thread(target=awiguairhg, daemon=True).start()
@@ -586,7 +586,7 @@ def edit():
                             user_data=(field, tag),
                             callback=lambda _, __, u: delete_field(u[0], u[1]))
                 dpg.add_text(field.capitalize())
-            new_field_args[field] = dpg.add_input_text(hint="any", width=-1, pos=(100, 5))
+            new_field_args[field] = dpg.add_input_text(hint=t("any"), width=-1, pos=(100, 5))
             dpg.set_value(new_field_args[field], value)
 
         #also register in main edit_args so submit picks it up
@@ -619,11 +619,11 @@ def edit():
 
 
     #UI
-    dpg.add_button(label="log in through discord", tag="login_button", width=-1, height=100, callback=login)
+    dpg.add_button(label=t("log in through discord"), tag="login_button", width=-1, height=100, callback=login)
 
     #only show after login
     with dpg.child_window(tag="numpad_edit", width=-1, height=230):
-        dpg.add_input_text(tag="index_input", hint="index", width=-1)
+        dpg.add_input_text(tag="index_input", hint=t("index"), width=-1)
 
         with dpg.group(horizontal=True):
 
@@ -645,24 +645,24 @@ def edit():
                         dpg.add_button(tag=f"{num}_edit", label=num, width=55, height=44,
                                     callback=numpad_press)
             
-            dpg.add_button(label="edit", width=-1, height=-1, callback=submit_edit_get)
+            dpg.add_button(label=t("edit"), width=-1, height=-1, callback=submit_edit_get)
     dpg.hide_item("numpad_edit")
 
     #actual edit child window
-    dpg.bind_item_font(dpg.add_text("ERROR", tag="edit_loading_text_error"), state.big_font)
+    dpg.bind_item_font(dpg.add_text(t("ERROR"), tag="edit_loading_text_error"), state.big_font)
     dpg.hide_item("edit_loading_text_error")
 
     dpg.hide_item(dpg.add_text(tag="edit_loading_text")) #loading text
-    dpg.hide_item(dpg.add_button(tag="edit_back_button_error", label="back to numpad", height=20, width=-1, callback=back_to_numpad))
-    dpg.hide_item(dpg.add_button(tag="edit_back_button", label="back to edit", height=20, width=-1, callback=back_to_edit))
+    dpg.hide_item(dpg.add_button(tag="edit_back_button_error", label=t("back to numpad"), height=20, width=-1, callback=back_to_numpad))
+    dpg.hide_item(dpg.add_button(tag="edit_back_button", label=t("back to edit"), height=20, width=-1, callback=back_to_edit))
 
     with dpg.child_window(width=-1, height=-1, tag="edit_window", border=False):
 
         #input text
         with dpg.group(tag="field_value_edits", horizontal=True):
             with dpg.group():
-                dpg.bind_item_font(dpg.add_input_text(tag="add_field_edit", hint="<field>", width=200, height=30, callback=add_field_input_changed), state.big_font)
-                dpg.bind_item_font(dpg.add_input_text(tag="add_value_edit", hint="<value>", width=200, height=30, callback=add_value_input_changed), state.big_font)
+                dpg.bind_item_font(dpg.add_input_text(tag="add_field_edit", hint=t("<field>"), width=200, height=30, callback=add_field_input_changed), state.big_font)
+                dpg.bind_item_font(dpg.add_input_text(tag="add_value_edit", hint=t("<value>"), width=200, height=30, callback=add_value_input_changed), state.big_font)
 
             #autofill item
             dpg.add_listbox(items=[], tag="suggestion_list_edit", width=-1, callback=on_add_suggestion_click)
@@ -673,17 +673,17 @@ def edit():
         #bottom
         with dpg.child_window(tag="back_submit"):
             with dpg.group(horizontal=True):
-                dpg.add_button(label="back to numpad", width=WIDTH//2-10, height=-1, tag="back_edit", callback=back_to_numpad)
-                dpg.add_button(label="submit edit", width=-1, height=-1, tag="submit_edit", callback=submit_edit)
+                dpg.add_button(label=t("back to numpad"), width=WIDTH//2-10, height=-1, tag="back_edit", callback=back_to_numpad)
+                dpg.add_button(label=t("submit edit"), width=-1, height=-1, tag="submit_edit", callback=submit_edit)
 
 
 
     dpg.hide_item("edit_window")
 
     with dpg.child_window(width=-1, height=-1, tag="leaderboard_window"):
-        dpg.add_text("[ LEADERBOARD ]")
+        dpg.add_text(t("[ LEADERBOARD ]"))
         dpg.add_separator()
-        dpg.add_button(label="update", tag="update_leaderboard_button", width=-1, height=20, callback=update_leaderboard)
+        dpg.add_button(label=t("update"), tag="update_leaderboard_button", width=-1, height=20, callback=update_leaderboard)
         dpg.add_text(tag="leaderboard_loading_text")
 
         #leaderboard entries

@@ -57,9 +57,30 @@ current_get_planet:bool = None
 
 current_edit_planet:bool = None; current_edit_index = None
 
+#languages
+lang = "en"
+
+def load_lang(language):
+    global lang
+    lang = language
+    try:
+        with open(locally(f"other/lang/{language}.json"), "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        with open(locally("other/lang/en.json"), "r", encoding="utf-8") as f:
+            return json.load(f)
+        
+strings = load_lang(lang)
+
+def reload_strings():
+    global strings
+    strings = load_lang(lang)
+
+def t(key):  #translate
+    return strings.get(key, key)
+
 #other
 big_font = None #INITIALIZE INSIDE OF MAIN!!!!!!!
-
 
 with open(locally("other/fields.json"), "r") as f:
     field_data = json.load(f)
