@@ -95,6 +95,7 @@ with dpg.font_registry():
     with dpg.font(locally("other/fixedsys.ttf"), 14) as default_font:
         dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
     with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
+        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
         state.big_font = big_font
 
 dpg.bind_font(default_font)
