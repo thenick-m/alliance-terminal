@@ -80,7 +80,17 @@ def populate_get_tab(planet):
     
 
     # --- HEADER ---
-    dpg.add_text(f"{name}", tag="planet_name_header", parent="get_tab_content")
+    def edit_call(sender):
+        dpg.set_value("tab_bar", "edit_tab")
+        dpg.set_value("index_input", sender.split("...")[0])
+    
+    if rq.discord_token:
+        with dpg.group(horizontal=True, parent="get_tab_content"):
+            dpg.add_text(f"{name}", tag="planet_name_header")
+            dpg.add_button(label="quick edit", tag=f"{index}...edit_call", width=-1, height=25, callback=edit_call)
+    else:
+        dpg.add_text(f"{name}", tag="planet_name_header", parent="get_tab_content")
+
     dpg.bind_item_font("planet_name_header", big_font)
     dpg.add_text(f"Star {star_id}  |  Planet {planet_id}/{planet_count}  |  Index {index}", 
                 parent="get_tab_content")

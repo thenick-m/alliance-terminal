@@ -11,7 +11,7 @@ from modules import audioshit as sound
 from modules import imagehelpers
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "0.2.0"
+VERSION = "1.0.0 Alpha"
 
 settings = {}
 
@@ -52,6 +52,8 @@ def make_theme(color1, color2, color3, color4):
             dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, color3)
             dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, color4)
             dpg.add_theme_color(dpg.mvThemeCol_ChildBg, color1)
+            dpg.add_theme_color(dpg.mvThemeCol_CheckMark, color4)
+
     return crt_theme
 
 def set_theme(

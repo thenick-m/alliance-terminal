@@ -72,7 +72,7 @@ def edit():
 
             time.sleep(3)
 
-            dpg.hide_item("discord_thinking_window") 
+            dpg.delete_item("discord_thinking_window") 
 
         threading.Thread(target=do_login, daemon=True).start()
 

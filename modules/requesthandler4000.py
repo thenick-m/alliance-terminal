@@ -76,4 +76,4 @@ def count(stringSearchArg:str):
     return request("count", {"stringSearchArg": stringSearchArg})
 
 def leaderboard():
-    return request("leaderboard", polls=10)
+    return request("leaderboard")
