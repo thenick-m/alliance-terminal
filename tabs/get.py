@@ -10,6 +10,19 @@ from modules.state import *
 
 resource_fields = state.field_data["resource_fields"]
 
+color_dict = { #copied from x4a
+    "Tektite": (60, 120, 216),
+    "Gummite": (255, 217, 102),
+    "Bauxite": (230, 145, 56),
+    "Hematite": (180, 95, 6),
+    "Malachite": (56, 118, 29),
+    "Petroleum": (102, 102, 102),
+    "Coal": (102, 102, 102),
+    "Cerussite": (249, 203, 156),
+    "Gold": (251, 188, 4),
+    "Sulfur": (127, 96, 0)
+}
+
 def switch_get_view():
     if state.current_get_planet: 
         dpg.show_item("get_tab_content")
@@ -67,7 +80,17 @@ def populate_get_tab(planet):
     
 
     # --- HEADER ---
-    dpg.add_text(f"{name}", tag="planet_name_header", parent="get_tab_content")
+    def edit_call(sender):
+        dpg.set_value("tab_bar", "edit_tab")
+        dpg.set_value("index_input", sender.split("...")[0])
+    
+    if rq.discord_token:
+        with dpg.group(horizontal=True, parent="get_tab_content"):
+            dpg.add_text(f"{name}", tag="planet_name_header")
+            dpg.add_button(label="quick edit", tag=f"{index}...edit_call", width=-1, height=25, callback=edit_call)
+    else:
+        dpg.add_text(f"{name}", tag="planet_name_header", parent="get_tab_content")
+
     dpg.bind_item_font("planet_name_header", big_font)
     dpg.add_text(f"Star {star_id}  |  Planet {planet_id}/{planet_count}  |  Index {index}", 
                 parent="get_tab_content")
@@ -100,7 +123,6 @@ def populate_get_tab(planet):
     dpg.add_separator(parent="get_tab_content")
 
     #numeric resources bar chart
-    
     resource_graph = dpg.add_child_window(parent="get_tab_content", width=-1, height=230, border=True)
 
     #header with toggle button
@@ -153,19 +175,18 @@ def populate_get_tab(planet):
                 known_x.append(float(j))
                 known_y.append(float(val))
 
-        if known_x:
-            dpg.add_bar_series(x=known_x, y=known_y, weight=0.7,
-                            label="Known", parent=y_axis)
-
-        if present_x:
-            series = dpg.add_bar_series(x=present_x, y=present_y, weight=0.7,
-                                    label="Present", parent=y_axis)
-            with dpg.theme() as present_theme:
+        for j, (key, val) in enumerate(numeric_resources.items()):
+            if val in ["Present", "present"]:
+                color = color_dict.get(key, state.color4) + (100,) if state.colorbars else state.color4
+                series = dpg.add_bar_series(x=[float(j)], y=[1.0], weight=0.7, parent=y_axis)
+            else:
+                color = color_dict.get(key, state.color4) + (255,) if state.colorbars else state.color4
+                series = dpg.add_bar_series(x=[float(j)], y=[float(val)], weight=0.7, parent=y_axis)
+            
+            with dpg.theme() as bar_theme:
                 with dpg.theme_component(dpg.mvBarSeries):
-                    dpg.add_theme_color(dpg.mvPlotCol_Fill,
-                                    state.color4+(100,),
-                                    category=dpg.mvThemeCat_Plots)
-            dpg.bind_item_theme(series, present_theme)
+                    dpg.add_theme_color(dpg.mvPlotCol_Fill, color, category=dpg.mvThemeCat_Plots)
+            dpg.bind_item_theme(series, bar_theme)
 
         #shorten fields
         for i in range(len(all_fields)):

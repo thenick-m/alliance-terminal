@@ -159,9 +159,6 @@ def search():
 
         def populate_results(results):
 
-            def pretty_results_from_dict(results_dict):
-                return "\n".join([f"{key}: {value}" for key, value in results_dict.items()])
-
             sound.play_sound(locally("sounds/reciept1.wav"))
             sound.play_sound(locally("sounds/success.wav"))
 
@@ -200,6 +197,9 @@ def search():
                 )
                 dpg.bind_item_font(f"{result[0]}_result_title", big_font)
 
+                def pretty_results_from_dict(results_dict):
+                    return "\n".join([f"{key}: {value}" for key, value in results_dict.items()])
+            
                 dpg.add_text(
                     f"\n{pretty_results_from_dict(result_to_display)}",
                     parent=child,

@@ -60,6 +60,7 @@ def edit():
 
                 dpg.delete_item("discord_thinking_window")
                 dpg.hide_item("login_button")
+                dpg.show_item("log_out")
 
                 dpg.show_item("numpad_edit")
 
@@ -71,7 +72,7 @@ def edit():
 
             time.sleep(3)
 
-            dpg.hide_item("discord_thinking_window") 
+            dpg.delete_item("discord_thinking_window") 
 
         threading.Thread(target=do_login, daemon=True).start()
 
@@ -169,7 +170,10 @@ def edit():
         state.current_edit_planet = None
         state.current_edit_index = None
         switch_edit_view()
+
         dpg.hide_item("edit_loading_text_error")
+        dpg.set_value("edit_loading_text_error", "ERROR")
+
         dpg.hide_item("edit_back_button_error")
         dpg.hide_item("edit_back_button")
 
@@ -179,8 +183,9 @@ def edit():
         dpg.hide_item("edit_loading_text")
         dpg.hide_item("edit_back_button_error")
         dpg.hide_item("edit_back_button")
+        
         dpg.hide_item("edit_loading_text_error")
-
+        dpg.set_value("edit_loading_text_error", "ERROR")
 
         dpg.show_item("edit_window")
         dpg.show_item("back_edit")
@@ -500,7 +505,6 @@ def edit():
                         dpg.set_value("edit_loading_text_error", "SUCCESS")
                         time.sleep(0.5)
 
-                    dpg.set_value("edit_loading_text_error", "ERROR")
                 threading.Thread(target=waluifhruifb, daemon=True).start()
 
                 return

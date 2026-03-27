@@ -11,8 +11,9 @@ from modules import audioshit as sound
 from modules import imagehelpers
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "0.2.0"
+VERSION = "1.0.0 Alpha"
 
+settings = {}
 
 def make_theme(color1, color2, color3, color4):
     with dpg.theme() as crt_theme:
@@ -51,6 +52,8 @@ def make_theme(color1, color2, color3, color4):
             dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, color3)
             dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, color4)
             dpg.add_theme_color(dpg.mvThemeCol_ChildBg, color1)
+            dpg.add_theme_color(dpg.mvThemeCol_CheckMark, color4)
+
     return crt_theme
 
 def set_theme(
@@ -117,13 +120,15 @@ with dpg.window(label="x4at", tag="main_window"):
         add_boot_text("saving settings...")
         
         with open(savepath('other/settings.json'), 'w', encoding='utf-8') as file:
-            settings = {}
+            global settings
             settings["color1"] = state.color1
             settings["color2"] = state.color2
             settings["color3"] = state.color3
             settings["color4"] = state.color4
             settings["sfx_volume"] = sound.sfx_volume
             settings["noise"] = state.noise
+            settings["colorbars"] = state.colorbars
+            settings["token"] = rq.discord_token if rq.discord_token else 0
 
             json.dump(settings, file, indent=4) #saveshit
 
@@ -180,9 +185,9 @@ with dpg.window(label="x4at", tag="main_window"):
         # --- SETTINGS --- 
         with dpg.tab(label="settings", tag="settings_tab"):
             
-            with dpg.child_window(horizontal_scrollbar=True, width=-1, height=150):
+            with dpg.child_window(horizontal_scrollbar=True, width=-1, height=165, tag="themes"):
                 dpg.add_text("[ THEMES ]")
-                with dpg.group(horizontal=True):
+                with dpg.group(horizontal=True, tag="weoihauipuiwfgbouirg"):
                     class Theme:
                         def __init__(self, name, color1, color2, color3, color4):
                             self.name = name
@@ -202,15 +207,71 @@ with dpg.window(label="x4at", tag="main_window"):
                             button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
                             dpg.bind_item_theme(button, self.theme)
 
+                        def remove_custom(self):
+                            global settings
+
+                            dpg.delete_item(self.window)
+                            del settings["themes"][self.name]
+
+                            sound.play_sound(locally("sounds/submit4.wav"))
+
+                        def add_custom(self):
+                            with dpg.child_window(parent="custom_themes", width=150) as window:
+
+                                with dpg.group(horizontal=True):
+
+                                    dpg.add_button(label="X", width=20, height=-1, callback=self.remove_custom)
+                                    button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
+                                    self.window = window
+                                    dpg.bind_item_theme(button, self.theme)
+
 
                     Theme("phosphor", (20, 13, 8), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
                     Theme("byte", (20, 35, 29), (85, 101, 81), (150, 167, 134), (215, 233, 186)).add()
-                    Theme("senno", (36, 19, 23), (75, 34, 34), (149, 68, 67), (224, 102, 101)).add()
+                    Theme("gold", (50, 25, 0), (100, 50, 25), (200, 100, 50), (255, 200, 100)).add()
                     Theme("girly girl", (54, 42, 53), (112, 89, 110), (161, 127, 158), (255, 183, 197)).add()
                     Theme("manly man", (10, 10, 13), (75, 75, 94), (139, 139, 174), (204, 204, 255)).add()
                     Theme("emo bart", (22, 22, 22), (129, 129, 129), (27, 20, 35), (237, 237, 237)).add()
-                    Theme("cynax", (1, 4, 33), (32, 49, 107), (63, 94, 181), (94, 139, 255)).add()
 
+                    #custom theme entry box
+                    def submit_custom_theme():
+                        global settings
+
+                        color1 = dpg.get_value("color1")
+                        color2 = dpg.get_value("color2")
+                        color3 = dpg.get_value("color3")
+                        color4 = dpg.get_value("color4")
+
+                        color1 = tuple([int(''.join(filter(str.isdigit, string))) for string in color1.split()])
+                        color2 = tuple([int(''.join(filter(str.isdigit, string))) for string in color2.split()])
+                        color3 = tuple([int(''.join(filter(str.isdigit, string))) for string in color3.split()])
+                        color4 = tuple([int(''.join(filter(str.isdigit, string))) for string in color4.split()])
+
+                        name = dpg.get_value("custom_theme_name_input")
+
+                        theme = Theme(name, color1, color2, color3, color4)
+
+                        theme.change_theme()
+                        theme.add_custom()
+
+                        settings["themes"][name] = [list(color1), list(color2), list(color3), list(color4)]
+
+
+                    with dpg.child_window(height=-1, width=200, parent="weoihauipuiwfgbouirg"):
+                        with dpg.group(horizontal=True):
+                            with dpg.group():
+                                dpg.add_input_text(tag="color1", hint="r g b (bg)", width=100)
+                                dpg.add_input_text(tag="color2", hint="r g b (mid 1)", width=100)
+                                dpg.add_input_text(tag="color3", hint="r g b (mid 2)", width=100)
+                                dpg.add_input_text(tag="color4", hint="r g b (main)", width=100)
+
+                            with dpg.group():
+                                dpg.add_input_text(hint="name", width=-1, tag="custom_theme_name_input")
+                                dpg.add_button(label="custom", width=-1, height=-1, callback=submit_custom_theme)
+
+                    with dpg.child_window(horizontal_scrollbar=True, width=400, height=-1):
+                        dpg.add_text("[ CUSTOM THEMES ]")
+                        dpg.add_group(horizontal=True, tag="custom_themes")
 
             dpg.add_separator()
 
@@ -221,6 +282,7 @@ with dpg.window(label="x4at", tag="main_window"):
                 sound.sfx_volume = app_data
 
             dpg.add_slider_float(
+                tag="sfx_volume_slider",
                 label="sfx volume",
                 default_value=1,
                 min_value=0,
@@ -234,7 +296,36 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_separator()
 
-            dpg.add_checkbox(label="retroboi", callback=toggle_noise, default_value=state.noise)
+            dpg.add_checkbox(tag="retro_effects_toggle", label="retro effects", callback=toggle_noise, default_value=state.noise)
+
+            def toggle_color_bars():
+                sound.play_sound(locally("sounds/switch2.wav"))
+                state.colorbars = not state.colorbars
+
+            dpg.add_separator()
+
+            dpg.add_checkbox(tag="colorbars_toggle", label="colored resource bars", callback=toggle_color_bars, default_value=state.colorbars)
+
+            def log_out():
+                global settings
+
+                settings["token"] = 0
+                rq.discord_token = None
+
+                with open(savepath('other/settings.json'), 'w', encoding='utf-8') as file:
+
+                    json.dump(settings, file, indent=4)
+
+                dpg.hide_item("numpad_edit")
+                dpg.show_item("login_button")
+                dpg.hide_item("log_out")
+
+                sound.play_sound(locally("sounds/shutdown.wav"))
+                
+
+            dpg.add_separator()
+
+            dpg.hide_item(dpg.add_button(label="log out", tag="log_out", callback=log_out))
             
             def sales_demolition():
                 sound.play_sound(locally("sounds/click2.wav"))
@@ -291,6 +382,8 @@ def boot_sequence():
     add_boot_text(f"v{VERSION}")
 
     #LOAD SETTINGS
+    global settings
+
     add_boot_border("LOADING SETTINGS")
     try:
         with open(savepath('other/settings.json'), 'r', encoding='utf-8') as file:
@@ -306,23 +399,46 @@ def boot_sequence():
                 "color2": [40, 20, 5],
                 "color3": [84, 41, 9],
                 "color4": [250, 134, 55],
+                "themes": {},
                 "sfx_volume": 1,
-                "noise": True
+                "noise": True,
+                "colorbars": False,
+                "token": 0
             }
+
+    #load custom themes
+    for name, theme in settings["themes"].items():
+        Theme(name, tuple(theme[0]), tuple(theme[1]), tuple(theme[2]), tuple(theme[3])).add_custom()
 
     #sfx volume
     sound.sfx_volume = settings["sfx_volume"]; add_boot_text(f"sfx_volume: {sound.sfx_volume}")
+    dpg.set_value("sfx_volume_slider", sound.sfx_volume)
+
+    #editor
+    rq.discord_token = settings["token"] if settings["token"] else None
+
+    #editor gui
+    if rq.discord_token:
+        dpg.show_item("numpad_edit")
+        dpg.hide_item("login_button")
 
     #theme colors
     state.color1 = tuple(settings["color1"])
     state.color2 = tuple(settings["color2"])
     state.color3 = tuple(settings["color3"])
     state.color4 = tuple(settings["color4"])
-    state.noise = settings["noise"]
     add_boot_text(f"color1: {state.color1}")
     add_boot_text(f"color2: {state.color2}")
     add_boot_text(f"color3: {state.color3}")
     add_boot_text(f"color4: {state.color4}")
+
+    #noise
+    state.noise = settings["noise"]
+    dpg.set_value("retro_effects_toggle", state.noise)
+
+    #colorbars
+    state.colorbars = settings["colorbars"]
+    dpg.set_value("colorbars_toggle", state.colorbars)
 
     imagehelpers.channel_switch()
     sound.play_sound(locally("sounds/static.wav"))

@@ -33,25 +33,33 @@ def run_async(fn, callback):
 
 # --- global vars ---
 
-WIDTH = 363
-HEIGHT = 705
+WIDTH:int = 363
+HEIGHT:int = 705
 
-debug = False
+debug:bool = False
 
-color1 = (0, 0, 0)
-color2 = (40, 20, 5)
-color3 = (84, 41, 9)
-color4 = (250, 134, 55)
+#settings
+color1:tuple = (0, 0, 0)
+color2:tuple = (40, 20, 5)
+color3:tuple = (84, 41, 9)
+color4:tuple = (250, 134, 55)
 
-noise = True
+noise:bool = True
+colorbars:bool = False
 
-search_results_view = False
-current_get_planet = None
-current_edit_planet = None; current_edit_index = None
 
-editor_mode = False
+#search
+search_results_view:bool = False
 
+
+#edit
+current_get_planet:bool = None
+
+current_edit_planet:bool = None; current_edit_index = None
+
+#other
 big_font = None #INITIALIZE INSIDE OF MAIN!!!!!!!
+
 
 with open(locally("other/fields.json"), "r") as f:
     field_data = json.load(f)
