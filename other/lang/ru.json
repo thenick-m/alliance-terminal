@@ -18,7 +18,6 @@
     "kys bro": "самоубейся чел",
     "recompute base encryption hash key": "пересчёт ключа шифрования базы данных",
     "back": "назад",
-    "<field> <operator> <value>": "<поле> <операция> <значение>",
     "ERROR": "ОШИБКА",
     "[ THEMES ]": "[ ТЕМЫ ]",
     "[ CUSTOM THEMES ]": "[ КАСТОМНЫЕ ТЕМЫ ]",
@@ -32,7 +31,6 @@
     "[ ENVIRONMENT ]": "[ ОКРУЖЕНИЕ ]",
     "[ OTHER ]": "[ ДРУГОЕ ]",
     "[ RESOURCES ]": "[ РЕСУРСЫ ]",
-    "[half-shaded] = Unknown\\n[fully-shaded] = Known": "[полу-закрашено] = Неизвестно\\n[полностью-закрашено] = Известно",
     "No resources logged": "Нет записанных ресурсов",
     "[ DEPOSITS ]": "[ ДЕПОЗИТЫ ]",
     "None": "Отсутствует",
@@ -58,6 +56,7 @@
     "index": "индекс",
     "back to edit": "назад к редактированию",
     "<field>": "<поле>",
+    "<operator>":"<операция>",
     "<value>": "<значение>",
     "[ LEADERBOARD ]": "[ ТАБЛИЦА ЛИДЕРОВ ]",
     "submit edit": "отправить редактирование",
@@ -72,5 +71,6 @@
     "results": "результаты",
     "[ LANGUAGES ]": "[ ЯЗЫКИ ]",
     "restart": "перезапустить",
-    "Restart program for lang change to take effect": "Перезапустите программу, чтобы применить изменения языка"
+    "Restart program for lang change to take effect": "Перезапустите программу, чтобы применить изменения языка",
+    "always on top": "поверх всех окон"
 }

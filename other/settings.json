@@ -20,9 +20,10 @@
         55
     ],
     "themes": {},
-    "lang": "ru",
+    "lang": "en",
     "sfx_volume": 1.0,
     "noise": true,
     "colorbars": false,
-    "token": "MTQ1NDM3MTQwMDg3Njk0OTU3Ng.Nbr6jqY9wWvGLlbNnkNRCqSb818Oeq"
+    "always_on_top": true,
+    "token": 0
 }
