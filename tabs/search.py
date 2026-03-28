@@ -283,7 +283,7 @@ def search():
                         height=170)
 
         dpg.add_input_text(tag="query_input", #query
-                        hint=t("<field> <operator> <value>"),
+                        hint=f"{t("<field>")} {t("<operator>")} {t("<value>")}",
                         callback=on_input_change,
                         on_enter=True,
                         width=200)

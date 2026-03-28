@@ -38,14 +38,13 @@ HEIGHT:int = 705
 
 debug:bool = False
 
-#settings
+# --- settings ---
+
+#themes
 color1:tuple = (0, 0, 0)
 color2:tuple = (40, 20, 5)
 color3:tuple = (84, 41, 9)
 color4:tuple = (250, 134, 55)
-
-noise:bool = True
-colorbars:bool = False
 
 
 #search
@@ -81,6 +80,12 @@ def t(key):  #translate
 
 #other
 big_font = None #INITIALIZE INSIDE OF MAIN!!!!!!!
+
+noise:bool = True
+
+colorbars:bool = False
+
+always_on_top = True
 
 with open(locally("other/fields.json"), "r") as f:
     field_data = json.load(f)

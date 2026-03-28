@@ -16,12 +16,14 @@ VERSION = "1.0.0 Alpha"
 
 settings = {}
 
-#load langs
+#load important stuff
 try:
     with open(savepath('other/settings.json'), 'r', encoding='utf-8') as file:
         settings = json.load(file)
         state.lang = settings["lang"]
         state.reload_strings()
+
+        state.always_on_top = settings["always_on_top"]
 except (FileNotFoundError, json.decoder.JSONDecodeError):
     print("shit")
 
@@ -140,6 +142,7 @@ with dpg.window(label="x4at", tag="main_window"):
             settings["sfx_volume"] = sound.sfx_volume
             settings["noise"] = state.noise
             settings["colorbars"] = state.colorbars
+            settings["always_on_top"] = state.always_on_top
             settings["token"] = rq.discord_token if rq.discord_token else 0
 
             json.dump(settings, file, indent=4) #saveshit
@@ -233,9 +236,10 @@ with dpg.window(label="x4at", tag="main_window"):
                                 with dpg.group(horizontal=True):
 
                                     dpg.add_button(label="X", width=20, height=-1, callback=self.remove_custom)
-                                    button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
+                                    dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
                                     self.window = window
-                                    dpg.bind_item_theme(button, self.theme)
+
+                                    dpg.bind_item_theme(window, self.theme)
 
 
                     Theme("phosphor", (20, 13, 8), (40, 20, 5), (84, 41, 9), (250, 134, 55)).add()
@@ -321,7 +325,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     files = [entry for entry in p.iterdir() if entry.is_file()]
 
                     for file in files:
-                        dpg.add_button(tag=f"{file.stem}...lang_change", label=file.stem, width=50, height=50, callback=change_lang)
+                        dpg.add_button(tag=f"{file.stem}...lang_change", label=file.stem, width=50, height=-1, callback=change_lang)
 
                         
 
@@ -357,6 +361,14 @@ with dpg.window(label="x4at", tag="main_window"):
             dpg.add_separator()
 
             dpg.add_checkbox(tag="colorbars_toggle", label=t("colored resource bars"), callback=toggle_color_bars, default_value=state.colorbars)
+
+            def toggle_always_top():
+                sound.play_sound(locally("sounds/switch2.wav"))
+                dpg.set_viewport_always_top(not dpg.is_viewport_always_top())
+
+            dpg.add_separator()
+
+            dpg.add_checkbox(tag="always_on_top_toggle", label=t("always on top"), callback=toggle_always_top, default_value=state.colorbars)
 
             def log_out():
                 global settings
@@ -456,6 +468,7 @@ def boot_sequence():
                 "sfx_volume": 1,
                 "noise": True,
                 "colorbars": False,
+                "always_on_top": True,
                 "token": 0
             }
 
@@ -469,6 +482,8 @@ def boot_sequence():
 
     #editor
     rq.discord_token = settings["token"] if settings["token"] else None
+    if rq.discord_token:
+        dpg.show_item("log_out")
 
     #editor gui
     if rq.discord_token:
@@ -485,8 +500,8 @@ def boot_sequence():
     add_boot_text(f"color3: {state.color3}")
     add_boot_text(f"color4: {state.color4}")
 
-    #lang
-    state.lang = settings["lang"]
+    #always on top
+    dpg.set_value("always_on_top_toggle", state.always_on_top)
 
     #noise
     state.noise = settings["noise"]
