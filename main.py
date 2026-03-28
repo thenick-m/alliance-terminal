@@ -325,7 +325,7 @@ with dpg.window(label="x4at", tag="main_window"):
                     files = [entry for entry in p.iterdir() if entry.is_file()]
 
                     for file in files:
-                        dpg.add_button(tag=f"{file.stem}...lang_change", label=file.stem, width=50, height=-1, callback=change_lang)
+                        dpg.add_button(tag=f"{file.stem}...lang_change", label=file.stem, width=50, height=70, callback=change_lang)
 
                         
 
