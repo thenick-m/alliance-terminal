@@ -438,11 +438,11 @@ def edit():
         if state.current_edit_planet == 1:
             state.current_edit_planet = {}
 
-        args = {field.capitalize(): str(value)
+        args = {field.capitalize(): str(value).capitalize()
                 for field, value in state.current_edit_planet.items()
                 if field.lower() in original_fields or field in original_fields}
 
-        new_args = {field.capitalize(): str(dpg.get_value(field_input))
+        new_args = {field.capitalize(): str(dpg.get_value(field_input)).capitalize()
                     for field, field_input in edit_args.items()}
 
         
