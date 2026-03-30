@@ -11,6 +11,7 @@ This is the desktop version of a discord bot x4Alliance which stores a database 
 ## Translators:
 * English (original) : thenick_m
 * Russian : willowself
+* Polish : yuyuyut_p
 
 ## Other
 * Access the x4Alliance discord bot [here](https://discord.gg/DzbAE9Fj3H)
