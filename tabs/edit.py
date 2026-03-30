@@ -398,7 +398,7 @@ def edit():
             if result == None:
                 set_text(t("couldn't contact server"))
             elif 'error' in result.keys():
-                if result['error'] == t('no matches found'): #no planet found
+                if result['error'] == 'no matches found': #no planet found
                     populate_edit_tab(1)
                     switch_edit_view()
                     state.current_edit_index = index
