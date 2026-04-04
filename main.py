@@ -11,6 +11,10 @@ from modules import state #reimport cached state module into namespace for redun
 from modules import audioshit as sound
 from modules import imagehelpers
 
+#tab switching shit
+from tabs.extras import extras
+from tabs.extras_tab import minigame as mg_module
+
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "1.0.0 Alpha"
 
@@ -95,12 +99,16 @@ set_theme()
 #font config
 with dpg.font_registry():
     with dpg.font(locally("other/fixedsys.ttf"), 14) as default_font:
-        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
+        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
         dpg.add_font_range(0x0100, 0x017F) #polish
 
+        dpg.add_font_range(0x2580, 0x259F) #block elements
+
     with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
-        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
+        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
         dpg.add_font_range(0x0100, 0x017F) #polish
+
+        dpg.add_font_range(0x2580, 0x259F) #block elements
         state.big_font = big_font
 
 dpg.bind_font(default_font)
@@ -161,7 +169,14 @@ with dpg.window(label="x4at", tag="main_window"):
         sound.play_sound(locally("sounds/switch.wav"))
         imagehelpers.channel_switch()
 
-        tab = dpg.get_item_alias(app_data) #this is supposed to unfuck it since dpg app_data sends as dpg id 
+        tab = dpg.get_item_alias(app_data) #this is supposed to unfuck it since dpg app_data sends as dpg id
+
+        if tab != "extras_tab":
+            if mg_module.tab_exit: mg_module.tab_exit()
+        else:
+            dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
+
+
 
         if tab == "search_tab":
             if state.search_results_view:
@@ -183,7 +198,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
     
     with dpg.tab_bar(tag="tab_bar", callback=on_tab_switch):
-        #modularized tabs into their own py file in v0.1.0
+        #modularized tabs into their own py files in v0.1.0
 
         # --- SEARCH ---
         with dpg.tab(label=t("search"), tag="search_tab"):
@@ -199,6 +214,10 @@ with dpg.window(label="x4at", tag="main_window"):
         with dpg.tab(label=t("edit"), tag="edit_tab"):
             from tabs.edit import edit
             edit()
+
+        # -- EXTRAS --- added in v1.1.0
+        with dpg.tab(label=t("extras"), tag="extras_tab"):
+            extras()
 
         # --- SETTINGS --- 
         with dpg.tab(label=t("settings"), tag="settings_tab"):
