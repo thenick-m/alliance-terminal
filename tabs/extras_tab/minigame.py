@@ -1,19 +1,19 @@
 from dearpygui import dearpygui as dpg
 import random
 import threading
-import time
 
 from modules import audioshit as sound
 from modules import state
-from modules import imagehelpers
+from modules.imagehelpers import channel_switch
 from modules.state import *
 
+#copeid shit from stack overflow retrofitted
 COLS     = 10
 ROWS     = 10
 CELL     = 18
 PAD      = 8
-CANVAS_W = COLS * CELL + PAD * 2
-CANVAS_H = ROWS * CELL + PAD * 2
+CANVAS_W = COLS * CELL + PAD * 2 +15
+CANVAS_H = ROWS * CELL + PAD * 2 +15
 
 tab_enter = None
 tab_exit  = None
@@ -82,6 +82,8 @@ def minigame():
                 break
 
     def new_maze():
+        at_end[0] = False
+
         generate_maze()
         trail.clear()
         player[0], player[1] = 0, 0
@@ -154,12 +156,23 @@ def minigame():
                         parent="maze_drawlist")
 
     # --- movement ---
+    at_end = [False]
+
+    def check_end():
+        if player[0] == end_pos[0] and player[1] == end_pos[1]:
+            at_end[0] = True
+            sound.play_sound(locally("sounds/maze_complete.wav"))
+            channel_switch(0.25)
+            threading.Timer(0.4, new_maze).start()
+            return True
+        return False
+    
     def can_move(r, c, dr, dc):
         wall_idx = {(-1,0): 0, (0,1): 1, (1,0): 2, (0,-1): 3}
         return not maze[(r,c)]['walls'][wall_idx[(dr,dc)]]
 
     def move(dr, dc):
-        if not game_active[0]:
+        if at_end[0]:
             return
 
         moved = False
@@ -182,35 +195,19 @@ def minigame():
             if check_end():
                 return
 
-    def check_end():
-        if player[0] == end_pos[0] and player[1] == end_pos[1]:
-            sound.play_sound(locally("sounds/success.wav"))
-            imagehelpers.channel_switch(0.25)
-            threading.Timer(0.4, new_maze).start()
-            return True
-        return False
-
     # --- keyboard ---
     def on_key_press(_, app_data):
-        if not game_active[0]:
+        if dpg.get_item_alias(dpg.get_value("tab_bar")) != "extras_tab":
+            return
+        if dpg.get_item_alias(dpg.get_value("extras_bar")) != "minigame_tab":
+            return
+        if at_end[0]:
             return
         k = app_data
         if   k == dpg.mvKey_Up    or k == dpg.mvKey_W: move(-1,  0)
         elif k == dpg.mvKey_Down  or k == dpg.mvKey_S: move( 1,  0)
         elif k == dpg.mvKey_Left  or k == dpg.mvKey_A: move( 0, -1)
         elif k == dpg.mvKey_Right or k == dpg.mvKey_D: move( 0,  1)
-
-    # --- tab lifecycle ---
-    def start_game():
-        game_active[0] = True
-        if not maze:
-            new_maze()
-
-    def stop_game():
-        game_active[0] = False
-
-    tab_enter = start_game
-    tab_exit  = stop_game
 
     # --- UI ---
     dpg.add_separator(parent="minigame_tab")
@@ -237,3 +234,10 @@ def minigame():
 
     with dpg.handler_registry():
         dpg.add_key_press_handler(callback=on_key_press)
+
+    at_end[0] = False
+
+    generate_maze()
+    trail.clear()
+    player[0], player[1] = 0, 0
+    draw_maze()
