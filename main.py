@@ -171,12 +171,8 @@ with dpg.window(label="x4at", tag="main_window"):
 
         tab = dpg.get_item_alias(app_data) #this is supposed to unfuck it since dpg app_data sends as dpg id
 
-        if tab != "extras_tab":
-            if mg_module.tab_exit: mg_module.tab_exit()
-        else:
+        if tab == "extras_tab":
             dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
-
-
 
         if tab == "search_tab":
             if state.search_results_view:
