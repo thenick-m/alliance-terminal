@@ -1,29 +1,45 @@
-#sfx manager
-from pygame import mixer
+from just_playback import Playback
+import threading
+import time
 
-mixer.init()
+sfx_volume = 1.0
+_radio = Playback()
+_active_sfx = []
 
-sfx_volume = 1
-
-sfx = {}
+# --- SFX ---
 
 def play_sound(filename, volume=None, max_time=None):
-    global sfx
+    vol = volume if volume is not None else sfx_volume
 
-    if volume == None:
-        volume = sfx_volume
+    #clean up finished sounds
+    _active_sfx[:] = [p for p in _active_sfx if p.playing]
 
-    if filename in sfx.keys():
-        sound = sfx[filename]
-    else:
-        sfx[filename] = mixer.Sound(filename)
-        sound = sfx[filename]
+    p = Playback()
+    p.load_file(filename)
+    p.set_volume(vol)
+    p.play()
+    _active_sfx.append(p)
 
-
-    sound.set_volume(volume)
     if max_time:
-        sound.play(maxtime=max_time)
-    else:
-        sound.play()
+        threading.Timer(max_time / 1000, p.stop).start()
 
-    return sound
+    return p
+
+# --- radio ---
+
+def play_radio(filepath, started_at):
+    global _radio
+    _radio.stop()
+    _radio.load_file(filepath)
+    offset = time.time() - started_at
+    _radio.seek(offset)
+    _radio.set_volume(sfx_volume)
+    _radio.play()
+
+def stop_radio():
+    _radio.stop()
+
+def set_volume(volume):
+    global sfx_volume
+    sfx_volume = volume
+    _radio.set_volume(volume)
