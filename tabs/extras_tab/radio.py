@@ -10,19 +10,23 @@ from modules.state import *
 
 import yt_dlp
 
-def download_audio(url, output_path):
+def download_audio(url, filename):
     ydl_opts = {
         'format': 'worstaudio',
-        'outtmpl': output_path,
+        'outtmpl': savepath(f"other/radio/{filename}.mp3"),
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '64',
         }],
         'quiet': True,
+        'ffmpeg_location': locally("other")
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
 
 def radio():
-    pass
+    def activate_radio():
+        print(rq.get_radio_state())
+
+    dpg.add_button(label="connect to radio", callback=activate_radio)
