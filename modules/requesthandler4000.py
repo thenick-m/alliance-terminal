@@ -55,10 +55,13 @@ def editor_login():
     if result["is_editor"]:
         discord_token = result["token"]
 
-        state.editor_mode = True
         print("editor mode enabled")
 
     return result
+
+def get_radio_state():
+    r = requests.get(f"{BASE_URL}/radio.json")
+    return r.json()
 
 def edit(stringSearchArg):
     return request("edit", {"stringSearchArg": stringSearchArg})
