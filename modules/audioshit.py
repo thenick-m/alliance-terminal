@@ -3,22 +3,23 @@ import threading
 import time
 
 sfx_volume = 1.0
-_radio = Playback()
-_active_sfx = []
+radio = Playback()
+active_sfx = []
 
 # --- SFX ---
 
 def play_sound(filename, volume=None, max_time=None):
+    global active_sfx
     vol = sfx_volume if volume is None else volume
 
     #clean up finished sounds
-    _active_sfx[:] = [p for p in _active_sfx if p.playing]
+    active_sfx[:] = [p for p in active_sfx if p.playing]
 
     p = Playback()
     p.load_file(filename)
     p.set_volume(vol) #TODO: fix ts not changing
     p.play()
-    _active_sfx.append(p)
+    active_sfx.append(p)
 
     if max_time:
         threading.Timer(max_time/1000, p.stop).start()
@@ -28,18 +29,18 @@ def play_sound(filename, volume=None, max_time=None):
 # --- radio ---
 
 def play_radio(filepath, started_at):
-    global _radio
-    _radio.stop()
-    _radio.load_file(filepath)
+    global radio
+    radio.stop()
+    radio.load_file(filepath)
+    radio.set_volume(sfx_volume)
+    radio.play()
     offset = time.time() - started_at
-    _radio.seek(offset)
-    _radio.set_volume(sfx_volume)
-    _radio.play()
+    radio.seek(offset)
 
 def stop_radio():
-    _radio.stop()
+    radio.stop()
 
 def set_volume(volume):
     global sfx_volume
     sfx_volume = volume
-    _radio.set_volume(volume)
+    radio.set_volume(volume)

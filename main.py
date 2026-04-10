@@ -4,6 +4,7 @@ import time
 import threading
 import random
 import json
+import subprocess
 
 from modules import requesthandler4000 as rq
 from modules.state import *
@@ -13,7 +14,6 @@ from modules import imagehelpers
 
 #tab switching shit
 from tabs.extras import extras
-from tabs.extras_tab import minigame as mg_module
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "1.0.0 Alpha"
@@ -28,7 +28,7 @@ try:
         state.reload_strings()
 
         state.always_on_top = settings["always_on_top"]
-except (FileNotFoundError, json.decoder.JSONDecodeError):
+except FileNotFoundError, json.decoder.JSONDecodeError:
     print("shit")
 
 def make_theme(color1, color2, color3, color4):
@@ -408,6 +408,8 @@ with dpg.window(label="x4at", tag="main_window"):
             dpg.add_separator()
 
             dpg.hide_item(dpg.add_button(label=t("log out"), tag="log_out", callback=log_out))
+
+            dpg.add_separator()
             
             def sales_demolition():
                 sound.play_sound(locally("sounds/click2.wav"))
@@ -489,6 +491,10 @@ def boot_sequence():
                 "always_on_top": True,
                 "token": 0
             }
+
+    add_boot_text("checking yt-dlp...")
+    subprocess.run([savepath("other/yt-dlp.exe"), "--update"], 
+                capture_output=True)
 
     #load custom themes
     for name, theme in settings["themes"].items():
