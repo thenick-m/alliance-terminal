@@ -2,7 +2,8 @@ from just_playback import Playback
 import threading
 import time
 
-sfx_volume = 1.0
+sfx_volume = 0.3
+radio_volume = 0.5
 radio = Playback()
 active_sfx = []
 
@@ -17,8 +18,8 @@ def play_sound(filename, volume=None, max_time=None):
 
     p = Playback()
     p.load_file(filename)
-    p.set_volume(vol) #TODO: fix ts not changing
     p.play()
+    p.set_volume(vol)
     active_sfx.append(p)
 
     if max_time:
@@ -32,7 +33,6 @@ def play_radio(filepath, started_at):
     global radio
     radio.stop()
     radio.load_file(filepath)
-    radio.set_volume(sfx_volume)
     radio.play()
     offset = time.time() - started_at
     radio.seek(offset)
@@ -40,7 +40,11 @@ def play_radio(filepath, started_at):
 def stop_radio():
     radio.stop()
 
+def set_volume_radio(volume):
+    radio.set_volume(volume)
+
+set_volume_radio(radio_volume)
+
 def set_volume(volume):
     global sfx_volume
     sfx_volume = volume
-    radio.set_volume(volume)

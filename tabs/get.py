@@ -244,7 +244,8 @@ def get():
 
     def submit_get():
         sound.play_sound(locally("sounds/submit5.wav"))
-
+        state.shake_viewport()
+        
         index = dpg.get_value("planet_id_input")
 
         if index:

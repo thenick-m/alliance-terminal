@@ -56,6 +56,10 @@ current_get_planet:bool = None
 
 current_edit_planet:bool = None; current_edit_index = None
 
+
+#screenshots
+screenie_ids = None
+
 #languages
 lang = "en"
 
@@ -87,5 +91,36 @@ colorbars:bool = False
 
 always_on_top = True
 
+screenshake = True
+
 with open(locally("other/fields.json"), "r") as f:
     field_data = json.load(f)
+
+import numpy as np
+from dearpygui import dearpygui as dpg
+import time
+def shake_viewport(intensity=8, duration=0.3, falloff=True):
+    def _run():
+        if screenshake:
+            rng = np.random.default_rng()
+            viewport_config = dpg.get_viewport_configuration("DPG NOTSET")
+            x = viewport_config['x_pos']
+            y = viewport_config['y_pos']
+            t_start = time.perf_counter()
+
+            while True:
+                elapsed = time.perf_counter() - t_start
+                t = elapsed / duration
+
+                if t >= 1.0:
+                    dpg.set_viewport_pos((x, y)) #snap back to origin
+                    break
+
+                strength = intensity * (1.0 - t) if falloff else intensity
+                ox = int(rng.uniform(-strength, strength))
+                oy = int(rng.uniform(-strength, strength))
+                dpg.set_viewport_pos((x + ox, y + oy))
+
+                time.sleep(0.016)
+
+    threading.Thread(target=_run, daemon=True).start()
