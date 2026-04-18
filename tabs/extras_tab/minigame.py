@@ -190,6 +190,7 @@ def minigame():
 
         if moved:
             sound.play_sound(locally("sounds/blip.wav"))
+            state.shake_viewport(2)
             draw_player()
 
             if check_end():

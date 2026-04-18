@@ -1,4 +1,3 @@
-import random
 import threading
 import time
 import os
@@ -7,8 +6,6 @@ from dearpygui import dearpygui as dpg
 
 from modules import audioshit as sound
 from modules import requesthandler4000 as rq
-from modules import state
-from modules import imagehelpers
 from modules.state import *
 
 import subprocess
@@ -21,13 +18,14 @@ def download_audio(url, filename):
         "--output", savepath(f"other/radio/{filename}.mp3"),
         "--extract-audio",
         "--audio-format", "mp3",
-        "--audio-quality", "64K",
+        "--audio-quality", "48K",
         "--ffmpeg-location", locally("other"),
         "--quiet"
     ])
 
 radio_thread = None
 radio_active = False
+radio_lock = threading.Lock()
 
 radio_lines = []
 def add_radio_line(text):
@@ -41,6 +39,7 @@ def add_radio_line(text):
     #init
     if text == "/init":
         dpg.show_item("radio_line_window")
+        dpg.show_item("radio_volume")
 
 
         for _ in range(15):
@@ -74,14 +73,14 @@ def play_radio_state(radio_state):
     sound.play_radio(path, radio_state['started_at'])
     print(path)
 
-def radio_loop():
-    global radio_active
+radio_generation = 0
+
+def radio_loop(generation):
     current_url = None
-    while radio_active:
+    while radio_active and generation == radio_generation:
         radio_state = rq.get_radio_state()
         if radio_state['url'] != current_url:
-            add_radio_line(f"got song: \n\n{radio_state["title"]}\nduration: {divmod(radio_state["duration"], 60)[0]:02}:{divmod(radio_state["duration"], 60)[1]:02}\ncontributor: {radio_state["contributor"]}\n")
-            
+            add_radio_line(f"got song: \n\n{radio_state['title']}\n...")
             current_url = radio_state['url']
             play_radio_state(radio_state)
             add_radio_line("now playing song")
@@ -91,7 +90,7 @@ def radio_loop():
         if sleep_for > 0:
             time.sleep(sleep_for)
         else:
-            time.sleep(2)  #song over but server didn't update so keep polling
+            time.sleep(2)
 
 def radio():
     def larp_startup():
@@ -99,27 +98,31 @@ def radio():
 
         dpg.disable_item("radio_button")
         add_radio_line("/init")
-        dpg.configure_item("radio_button", label="connect radio", callback=activate_radio)
+        dpg.configure_item("radio_button", label="connect radio", height=20, callback=activate_radio)
         dpg.enable_item("radio_button")
 
     def activate_radio():
+        dpg.disable_item("radio_button")
         sound.play_sound(locally("sounds/click2.wav"))
 
-        global radio_thread, radio_active
-        print(f"activate_radio called, radio_active={radio_active}")
+        global radio_thread, radio_active, radio_generation
 
-        if radio_active:  #already running
+        if radio_active:
             return
-        
-        dpg.show_item("radio_line_window")
-        radio_active = True
+
+        with radio_lock:
+            if radio_active:
+                return
+            radio_active = True
+            radio_generation += 1
+            gen = radio_generation
+
         add_radio_line("starting radio...")
-        radio_thread = threading.Thread(target=radio_loop, daemon=True)
+        radio_thread = threading.Thread(target=radio_loop, args=(gen,), daemon=True)
         radio_thread.start()
-        add_radio_line("radio process started")
-        dpg.configure_item("radio_button", label="disconnect radio", callback=deactivate_radio)
 
     def deactivate_radio():
+        dpg.disable_item("radio_button")
         sound.play_sound(locally("sounds/click2.wav"))
 
         global radio_active
@@ -127,13 +130,33 @@ def radio():
         sound.stop_radio()
 
         dpg.hide_item("radio_line_window")
+        dpg.hide_item("radio_volume")
+
         dpg.configure_item("radio_button", label="connect radio", callback=activate_radio)
         sound.play_sound(locally("sounds/shutdown.wav"))
+        dpg.enable_item("radio_button")
+
+    def radio_volume_callback(_, app_data):
+
+        sound.set_volume_radio(app_data/1.5)
+        sound.radio_volume = app_data/1.5
 
     #UI
-    with dpg.child_window(tag="radio_line_window", width=-1, height=235):
-        dpg.add_text(tag="radio_line", wrap=300)
-    dpg.hide_item("radio_line_window")
+    with dpg.group(horizontal=True):
+        dpg.hide_item(dpg.add_slider_float(
+                    tag="radio_volume",
+                    vertical=True,
+                    default_value=sound.radio_volume,
+                    format="%.1f",
+                    height=235,
+                    width=30,
+                    min_value=0,
+                    max_value=1,
+                    callback=radio_volume_callback)
+                    )
+        with dpg.child_window(tag="radio_line_window", width=-1, height=235):
+            dpg.add_text(tag="radio_line", wrap=280)
+        dpg.hide_item("radio_line_window")
 
-    dpg.add_button(label="startup radio", tag="radio_button", width=-1, callback=larp_startup)
+    dpg.add_button(label="startup radio", tag="radio_button", width=-1, height=-1, callback=larp_startup)
     dpg.hide_item(dpg.add_button(label="disconnect", tag="deactivate_radio", callback=deactivate_radio))

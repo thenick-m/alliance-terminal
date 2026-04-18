@@ -366,6 +366,7 @@ def edit():
 
     def submit_edit_get():
         sound.play_sound(locally("sounds/submit5.wav"))
+        state.shake_viewport()
 
         index = dpg.get_value("index_input")
 
@@ -540,7 +541,6 @@ def edit():
     def on_add_suggestion_click(_, app_data):
         sound.play_sound(locally("sounds/loading2.wav"), max_time=100)
 
-        #TODO: fix whatever is making this not fucking work
         if dpg.is_item_focused("add_field_edit") or not dpg.get_value("add_field_edit"):
             dpg.set_value("add_field_edit", app_data)
             field = app_data.lower()

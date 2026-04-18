@@ -1,12 +1,14 @@
 #requesthandler4000.py
 
+#comment these two for testing
 from modules import discord_auth
 from modules import state
+
 import requests
 import uuid
 import time
 
-#testing
+#uncomment for testing
 #import discord_auth
 
 BASE_URL = "https://x4alliancebackend-default-rtdb.firebaseio.com"
@@ -80,3 +82,6 @@ def count(stringSearchArg:str):
 
 def leaderboard():
     return request("leaderboard")
+
+#testing
+#print(search("(screenshots is true)"))
