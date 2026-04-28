@@ -65,6 +65,9 @@ def get_radio_state():
     r = requests.get(f"{BASE_URL}/radio.json")
     return r.json()
 
+def get_screenie(planetid, pos):
+    return request("getscreenie", {"planetID": planetid, "position": pos})
+
 def edit(stringSearchArg):
     return request("edit", {"stringSearchArg": stringSearchArg})
 

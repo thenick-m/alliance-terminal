@@ -104,23 +104,21 @@ with dpg.font_registry():
         dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
         dpg.add_font_range(0x0100, 0x017F) #polish
 
-        dpg.add_font_range(0x2580, 0x259F) #block elements
 
     with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
         dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
         dpg.add_font_range(0x0100, 0x017F) #polish
 
-        dpg.add_font_range(0x2580, 0x259F) #block elements
         state.big_font = big_font
 
 dpg.bind_font(default_font)
 
-#texture config mainly for noise shit
 with dpg.texture_registry():
     initial = imagehelpers.generate_retro_boi(WIDTH, HEIGHT).convert("RGBA")
     data = [x/255.0 for x in initial.tobytes()]
     dpg.add_dynamic_texture(WIDTH, HEIGHT, data, tag="noise_texture")
 
+    dpg.add_dynamic_texture(300, 300, [0, 0, 0, 0] * (300 * 300), tag="screenshot_texture") #placeholder for screenies
 
 # --- MAIN WINDOW ---
 with dpg.window(label="x4at", tag="main_window"):

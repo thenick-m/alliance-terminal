@@ -120,6 +120,8 @@ def radio():
         add_radio_line("starting radio...")
         radio_thread = threading.Thread(target=radio_loop, args=(gen,), daemon=True)
         radio_thread.start()
+        dpg.configure_item("radio_button", label="disconnect", callback=deactivate_radio)
+        dpg.enable_item("radio_button")
 
     def deactivate_radio():
         dpg.disable_item("radio_button")
@@ -159,4 +161,3 @@ def radio():
         dpg.hide_item("radio_line_window")
 
     dpg.add_button(label="startup radio", tag="radio_button", width=-1, height=-1, callback=larp_startup)
-    dpg.hide_item(dpg.add_button(label="disconnect", tag="deactivate_radio", callback=deactivate_radio))
