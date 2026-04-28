@@ -205,9 +205,9 @@ def minigame():
         if at_end[0]:
             return
         k = app_data
-        if   k == dpg.mvKey_Up    or k == dpg.mvKey_W: move(-1,  0)
-        elif k == dpg.mvKey_Down  or k == dpg.mvKey_S: move( 1,  0)
-        elif k == dpg.mvKey_Left  or k == dpg.mvKey_A: move( 0, -1)
+        if k == dpg.mvKey_Up or k == dpg.mvKey_W: move(-1,  0)
+        elif k == dpg.mvKey_Down or k == dpg.mvKey_S: move( 1,  0)
+        elif k == dpg.mvKey_Left or k == dpg.mvKey_A: move( 0, -1)
         elif k == dpg.mvKey_Right or k == dpg.mvKey_D: move( 0,  1)
 
     # --- UI ---
