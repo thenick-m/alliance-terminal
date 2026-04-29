@@ -230,7 +230,7 @@ def minigame():
                 dpg.add_button(label=">", width=btn_x, height=btn_y, callback=lambda: move(0,  1))
 
     dpg.add_separator(parent="minigame_tab")
-    dpg.add_button(label="new maze", parent="minigame_tab", width=-1, height=25,
+    dpg.add_button(label=t("new maze"), parent="minigame_tab", width=-1, height=25,
                    callback=new_maze)
 
     with dpg.handler_registry():

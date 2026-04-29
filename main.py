@@ -423,7 +423,6 @@ with dpg.window(label="x4at", tag="main_window"):
             def clear_radio():
                 radio_path = savepath("other/radio")
                 shutil.rmtree(radio_path)
-                os.mkdir(radio_path)
 
             dpg.add_separator()
 
@@ -521,7 +520,10 @@ def boot_sequence():
     ytdlp_update = threading.Thread(
         target=subprocess.run,
         args=([ytdlp_savepath, "--update"],),
-        kwargs={"capture_output": True}
+        kwargs={
+            "capture_output": True, 
+            "creationflags": subprocess.CREATE_NO_WINDOW 
+        }
     )
     ytdlp_update.start()
 

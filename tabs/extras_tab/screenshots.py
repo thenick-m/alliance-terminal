@@ -135,7 +135,7 @@ def screenshots():
                 for _ in range(19):
                     dpg.set_value("viewer_loading_text", " ".join(f"{random.randint(0, 255):02X}" for _ in range(36)))
                     time.sleep(0.05); dpg.set_value("viewer_loading_text", ""); time.sleep(0.05)
-                    dpg.set_value("viewer_loading_text", f"Note: {result["note"]}")
+                    dpg.set_value("viewer_loading_text", f"{t("Note")}: {result["note"]}")
             
             if initial:
                 sound.play_sound(locally("sounds/loading3.wav"))
@@ -233,7 +233,7 @@ def screenshots():
             with dpg.group():
                 dpg.add_input_text(tag="screenie_search", hint=t("search for index"), callback=on_search_change, width=200)
                 dpg.add_listbox([], tag="screenie_list", callback=on_list_click, width=200)
-            dpg.add_button(tag="view_button", label="view", width=-1, height=-1, callback=view_screenie)
+            dpg.add_button(tag="view_button", label=t("view"), width=-1, height=-1, callback=view_screenie)
 
         with dpg.handler_registry():
             dpg.add_key_press_handler(callback=on_key_press)
