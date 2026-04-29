@@ -6,20 +6,20 @@ from modules.state import *
 
 def extras():
 
-    def on_subtab_switch(_, app_data):
+    def on_subtab_switch():
         sound.play_sound(locally("sounds/click.wav"))
 
     with dpg.tab_bar(tag="extras_bar", callback=on_subtab_switch):
-        with dpg.tab(label="screenshots", tag="screenshots_tab"):
+        with dpg.tab(label=t("screenshots"), tag="screenshots_tab"):
             from tabs.extras_tab.screenshots import screenshots
             screenshots()
-        with dpg.tab(label="radio", tag="radio_tab"):
+        with dpg.tab(label=t("radio"), tag="radio_tab"):
             from tabs.extras_tab.radio import radio
             radio()
-        with dpg.tab(label="minigame", tag="minigame_tab"):
+        with dpg.tab(label=t("minigame"), tag="minigame_tab"):
             from tabs.extras_tab.minigame import minigame
             minigame()
-        with dpg.tab(label="credits"):
+        with dpg.tab(label=t("credits")):
             def big_text(text):
                 dpg.bind_item_font(dpg.add_text(text), state.big_font)
 

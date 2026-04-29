@@ -46,8 +46,8 @@ def add_radio_line(text):
             update_radio_line()
         time.sleep(0.1)
         sound.play_sound(locally("sounds/click4.wav"))
-        update_radio_line("radio started")
-        update_radio_line("press 'connect radio' to connect")
+        update_radio_line(t("radio started"))
+        update_radio_line(t("press 'connect radio' to connect"))
     else:
         update_radio_line(text)
 
@@ -61,11 +61,11 @@ def play_radio_state(radio_state):
             while not done:
                 sound.play_sound(locally("sounds/blip2.wav"))
                 time.sleep(0.5)
-        add_radio_line("song not discovered in cache")
-        add_radio_line("downloading...")
+        add_radio_line(t("song not discovered in cache"))
+        add_radio_line(f"{t("downloading")}...")
         threading.Thread(target=loading_sound, daemon=True).start()
         download_audio(radio_state['url'], filename)
-        add_radio_line("download done")
+        add_radio_line(t("download done"))
         done = True
         sound.play_sound(locally("sounds/click4.wav"))
         time.sleep(0.2)
@@ -80,10 +80,10 @@ def radio_loop(generation):
     while radio_active and generation == radio_generation:
         radio_state = rq.get_radio_state()
         if radio_state['url'] != current_url:
-            add_radio_line(f"got song: \n\n{radio_state['title']}\n...")
+            add_radio_line(f"{t("got song")}: \n\n{radio_state['title']}\n{t("duration")}: {'{:d}:{:02d}'.format(*divmod(radio_state['duration'], 60))}\n{(t"contributor")}: {radio_state['contributor']}\n")
             current_url = radio_state['url']
             play_radio_state(radio_state)
-            add_radio_line("now playing song")
+            add_radio_line(t("now playing song"))
 
         wake_at = radio_state['started_at'] + radio_state['duration']
         sleep_for = wake_at - time.time()
@@ -98,7 +98,7 @@ def radio():
 
         dpg.disable_item("radio_button")
         add_radio_line("/init")
-        dpg.configure_item("radio_button", label="connect radio", height=20, callback=activate_radio)
+        dpg.configure_item("radio_button", label=t("connect radio"), height=20, callback=activate_radio)
         dpg.enable_item("radio_button")
 
     def activate_radio():
@@ -117,10 +117,10 @@ def radio():
             radio_generation += 1
             gen = radio_generation
 
-        add_radio_line("starting radio...")
+        add_radio_line(f"{t("starting radio")}...")
         radio_thread = threading.Thread(target=radio_loop, args=(gen,), daemon=True)
         radio_thread.start()
-        dpg.configure_item("radio_button", label="disconnect", callback=deactivate_radio)
+        dpg.configure_item("radio_button", label=t("disconnect"), callback=deactivate_radio)
         dpg.enable_item("radio_button")
 
     def deactivate_radio():
@@ -134,7 +134,7 @@ def radio():
         dpg.hide_item("radio_line_window")
         dpg.hide_item("radio_volume")
 
-        dpg.configure_item("radio_button", label="connect radio", callback=activate_radio)
+        dpg.configure_item("radio_button", label=t("connect radio"), callback=activate_radio)
         sound.play_sound(locally("sounds/shutdown.wav"))
         dpg.enable_item("radio_button")
 
@@ -160,4 +160,4 @@ def radio():
             dpg.add_text(tag="radio_line", wrap=280)
         dpg.hide_item("radio_line_window")
 
-    dpg.add_button(label="startup radio", tag="radio_button", width=-1, height=-1, callback=larp_startup)
+    dpg.add_button(label=t("startup radio"), tag="radio_button", width=-1, height=-1, callback=larp_startup)
