@@ -15,10 +15,11 @@ from modules.state import *
 
 
 def screenshots():
-    current_results = []
     current_pos = 0
+    screenie_count = None
 
     def startup_viewer():
+        dpg.disable_item("viewer_button")
         sound.play_sound(locally("sounds/click4.wav"))
         done = False
         def waoiehfoipaugbp():
@@ -47,6 +48,7 @@ def screenshots():
 
             dpg.hide_item("viewer_button")
             dpg.show_item("screenie_group")
+        dpg.enable_item("viewer_button")
 
     #autofill shit
     def filter_ids(text):
@@ -64,10 +66,10 @@ def screenshots():
 
         dpg.configure_item("screenie_list", items=items)
 
-    def on_search_change(sender, app_data):
+    def on_search_change(_, app_data):
         refresh_list(app_data)
 
-    def on_list_click(sender, app_data):
+    def on_list_click(_, app_data):
         sound.play_sound(locally("sounds/loading2.wav"), max_time=100)
 
         items = dpg.get_item_configuration("screenie_list")["items"]
@@ -78,7 +80,7 @@ def screenshots():
 
         threading.Timer(0.05, lambda: pyautogui.press("end")).start()
 
-    def on_key_press(sender, app_data):
+    def on_key_press(_, app_data):
         if app_data == dpg.mvKey_Return and (dpg.get_item_alias(dpg.get_value("extras_bar")) == "screenshots_tab"):
 
             text = dpg.get_value("screenie_search")
@@ -89,10 +91,15 @@ def screenshots():
 
     #screenie viewer
     def view_screenie(initial=True):
+        nonlocal current_pos
+        nonlocal screenie_count
         if initial:
+            current_pos = 0
             sound.play_sound(locally("sounds/submit5.wav"))
-        else:
-            sound.play_sound(locally("sounds/submit4.wav"))
+            dpg.disable_item("s_bk")
+
+        if current_pos == 0:
+            dpg.disable_item("s_bk")
 
         id = dpg.get_value("screenie_search")
 
@@ -111,7 +118,9 @@ def screenshots():
         loading_sound = sound.play_sound(locally("sounds/loading1.wav"))
         threading.Thread(target=pawei0hrp9hwep, daemon=True).start()
 
-        result = rq.get_screenie(id, 0)
+        result = rq.get_screenie(id, current_pos)
+        screenie_count = result["count"]
+        update_buttons()
 
         done = True
         loading_sound.stop()
@@ -124,8 +133,9 @@ def screenshots():
             def q329rhpq4tbp():
                 time.sleep(0.5)
                 for _ in range(19):
-                    dpg.set_value("viewer_loading_text", " ".join(f"{random.randint(0, 255):02X}" for _ in range(20)))
+                    dpg.set_value("viewer_loading_text", " ".join(f"{random.randint(0, 255):02X}" for _ in range(36)))
                     time.sleep(0.05); dpg.set_value("viewer_loading_text", ""); time.sleep(0.05)
+                    dpg.set_value("viewer_loading_text", f"Note: {result["note"]}")
             
             if initial:
                 sound.play_sound(locally("sounds/loading3.wav"))
@@ -164,7 +174,42 @@ def screenshots():
             time.sleep(0.2)
         dpg.set_value("screenshot_texture", texture_data)
         screen_sound.stop()
+
+        if not initial:
+            dpg.set_value("viewer_loading_text", f"Note: {result["note"]}")
+
         dpg.enable_item("view_button")
+
+    def update_buttons():
+        if current_pos <= 0:
+            dpg.disable_item("s_bk")
+        else:
+            dpg.enable_item("s_bk")
+
+        if current_pos >= screenie_count - 1:
+            dpg.disable_item("s_fw")
+        else:
+            dpg.enable_item("s_fw")
+
+    def next_screenie():
+        nonlocal current_pos
+        sound.play_sound(locally("sounds/submit4.wav"))
+
+        if current_pos < screenie_count - 1:
+            current_pos += 1
+
+        update_buttons()
+        view_screenie(initial=False)
+
+    def prev_screenie():
+        nonlocal current_pos
+        sound.play_sound(locally("sounds/submit4.wav"))
+
+        if current_pos > 0:
+            current_pos -= 1
+
+        update_buttons()
+        view_screenie(initial=False)
 
     #UI
     dpg.add_button(label=t("startup screenshot viewer"),
@@ -179,9 +224,10 @@ def screenshots():
                 dpg.add_image("screenshot_texture", tag="screenie_image", width=165, height=145)
             with dpg.group():
                 with dpg.child_window(width=-1, height=WIDTH-250):
-                    dpg.add_text(tag="viewer_loading_text", wrap=WIDTH//2-40)
+                    dpg.add_text(tag="viewer_loading_text", wrap=WIDTH//2-60) #text
                 with dpg.group(horizontal=True):
-                    dpg.add_button(label="<", width=WIDTH//2//2-22, height=40); dpg.add_button(label=">", width=-1, height=40)
+                    dpg.disable_item(dpg.add_button(tag="s_bk", label="<", width=WIDTH//2//2-22, height=40, callback=prev_screenie))
+                    dpg.add_button(tag="s_fw", label=">", width=-1, height=40, callback=next_screenie)
         
         with dpg.group(horizontal=True):
             with dpg.group():

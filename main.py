@@ -14,7 +14,7 @@ from modules import state #reimport cached state module into namespace for redun
 from modules import audioshit as sound
 from modules import imagehelpers
 
-#tab switching shit
+#tab shit
 from tabs.extras import extras
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"

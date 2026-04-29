@@ -87,4 +87,3 @@ def leaderboard():
     return request("leaderboard")
 
 #testing
-#print(search("(screenshots is true)"))

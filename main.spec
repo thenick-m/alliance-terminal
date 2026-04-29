@@ -4,9 +4,7 @@
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[
-        ('other/ffmpeg.exe', 'other'),
-    ],
+    binaries=[],
     datas=[('other', 'other'), ('sounds', 'sounds'), ('tabs', 'tabs'), ('modules', 'modules')],
     hiddenimports=[],
     hookspath=[],

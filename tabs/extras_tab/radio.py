@@ -21,7 +21,7 @@ def download_audio(url, filename):
         "--audio-quality", "48K",
         "--ffmpeg-location", locally("other"),
         "--quiet"
-    ])
+    ], creationflags=subprocess.CREATE_NO_WINDOW)
 
 radio_thread = None
 radio_active = False
