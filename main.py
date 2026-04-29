@@ -18,7 +18,7 @@ from modules import imagehelpers
 from tabs.extras import extras
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "1.0.0 Alpha"
+VERSION = "2.0 Alpha"
 
 settings = {}
 
