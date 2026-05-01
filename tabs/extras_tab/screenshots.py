@@ -16,40 +16,52 @@ from modules.state import *
 
 def screenshots():
     current_pos = 0
-    screenie_count = None
+    screenie_count = 1
 
     def startup_viewer():
         dpg.disable_item("viewer_button")
         sound.play_sound(locally("sounds/click4.wav"))
-        done = False
-        def waoiehfoipaugbp():
-            nonlocal done
-            while not done:
-                dpg.configure_item("viewer_button", label=f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
-                time.sleep(0.1)
+        try:
+            done = False
+            def waoiehfoipaugbp():
+                nonlocal done
+                while not done:
+                    dpg.configure_item("viewer_button", label=f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                    time.sleep(0.1)
 
-        loading_sound = sound.play_sound(locally("sounds/loading1.wav"))
-        threading.Thread(target=waoiehfoipaugbp, daemon=True).start()
+            loading_sound = sound.play_sound(locally("sounds/loading1.wav"))
+            threading.Thread(target=waoiehfoipaugbp, daemon=True).start()
 
-        result = rq.search("(screenshots = True)")['matches']
+            result = rq.search("(screenshots = True)")
+            if result == None:
+                sound.play_sound(locally("sounds/error.wav"))
+                sound.play_sound(locally("sounds/error2.wav"))
+                done = True
+                loading_sound.stop()
 
-        done = True
-        loading_sound.stop()
+                dpg.configure_item("viewer_button", label=f"{t("ERROR")}: {t("couldn't contact server")}")
+                time.sleep(1)
+                return
+            else:
+                result = result["matches"]
 
-        if isinstance(result, dict):
-            dpg.configure_item("viewer_button", label=t("ERROR"))
-            sound.play_sound(locally("sounds/error2.wav"))
-        else:
-            sound.play_sound(locally("sounds/static.wav"))
-            imagehelpers.channel_switch()
+            done = True
+            loading_sound.stop()
 
-            state.screenie_ids = [entry[0] for entry in result]
-            refresh_list("")
+            if isinstance(result, dict):
+                dpg.configure_item("viewer_button", label=t("ERROR"))
+                sound.play_sound(locally("sounds/error2.wav"))
+            else:
+                sound.play_sound(locally("sounds/static.wav"))
+                imagehelpers.channel_switch()
 
-            dpg.hide_item("viewer_button")
-            dpg.show_item("screenie_group")
-        dpg.enable_item("viewer_button")
+                state.screenie_ids = [entry[0] for entry in result]
+                refresh_list("")
 
+                dpg.hide_item("viewer_button")
+                dpg.show_item("screenie_group")
+        finally:
+            dpg.enable_item("viewer_button")
     #autofill shit
     def filter_ids(text):
         text = text.lower()
@@ -90,95 +102,118 @@ def screenshots():
                 on_list_click(None, results[0])
 
     #screenie viewer
-    def view_screenie(initial=True):
+    def view_screenie(initial=True, increment=0):
         nonlocal current_pos
         nonlocal screenie_count
         if initial:
             current_pos = 0
             sound.play_sound(locally("sounds/submit5.wav"))
-            dpg.disable_item("s_bk")
 
-        if current_pos == 0:
-            dpg.disable_item("s_bk")
-
-        id = dpg.get_value("screenie_search")
+        split_shit = dpg.get_value("screenie_search").split()
+        id = split_shit[0]
+        
+        if len(split_shit) == 2 and initial:
+            current_pos = int(split_shit[1])        
 
         if not id:
             return
         
         dpg.disable_item("view_button")
+        dpg.disable_item("s_bk")
+        dpg.disable_item("s_fw")
         
-        done = False
-        def pawei0hrp9hwep():
-            nonlocal done
-            while not done:
-                dpg.set_value("viewer_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
-                time.sleep(0.1)
+        try:
+            done = False
+            def pawei0hrp9hwep():
+                nonlocal done
+                while not done:
+                    dpg.set_value("viewer_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                    time.sleep(0.1)
 
-        loading_sound = sound.play_sound(locally("sounds/loading1.wav"))
-        threading.Thread(target=pawei0hrp9hwep, daemon=True).start()
+            loading_sound = sound.play_sound(locally("sounds/loading1.wav")) if initial else sound.play_sound(locally("sounds/loading5.wav"), volume=sound.sfx_volume/2)
+            threading.Thread(target=pawei0hrp9hwep, daemon=True).start()
 
-        result = rq.get_screenie(id, current_pos)
-        screenie_count = result["count"]
-        update_buttons()
+            result = rq.get_screenie(id, current_pos)
+            if result == None:
+                sound.play_sound(locally("sounds/error.wav"))
+                sound.play_sound(locally("sounds/error2.wav"))
+                dpg.set_value("viewer_loading_text", f"{t("ERROR")}: {t("couldn't contact server")}")
+                done = True
+                loading_sound.stop()
+                current_pos -= increment
+                return
 
-        done = True
-        loading_sound.stop()
+            done = True
+            loading_sound.stop()
 
-        if "error" in result.keys():
-            sound.play_sound(locally("sounds/error.wav"))
-            sound.play_sound(locally("sounds/error2.wav"))
-            dpg.set_value("viewer_loading_text", f"{t("ERROR")}: {result["error"]}")
-        else:
-            def q329rhpq4tbp():
-                time.sleep(0.5)
-                for _ in range(19):
-                    dpg.set_value("viewer_loading_text", " ".join(f"{random.randint(0, 255):02X}" for _ in range(36)))
-                    time.sleep(0.05); dpg.set_value("viewer_loading_text", ""); time.sleep(0.05)
-                    dpg.set_value("viewer_loading_text", f"{t("Note")}: {result["note"]}")
+            if "error" in result.keys():
+                sound.play_sound(locally("sounds/error.wav"))
+                sound.play_sound(locally("sounds/error2.wav"))
+                dpg.set_value("viewer_loading_text", f"{t("ERROR")}: {result["error"]}")
+                done = True
+                loading_sound.stop()
+                current_pos -= increment
+                return
+            else:
+                screenie_count = result["count"]
+                update_buttons()
+
+                def q329rhpq4tbp():
+                    time.sleep(0.5)
+                    state.shake_viewport(intensity=1.5, duration=2, falloff=False)
+                    for _ in range(19):
+                        dpg.set_value("viewer_loading_text", " ".join(f"{random.randint(0, 255):02X}" for _ in range(36)))
+                        time.sleep(0.05); dpg.set_value("viewer_loading_text", ""); time.sleep(0.05)
+                        dpg.set_value("viewer_loading_text", f"{current_pos}/{result["count"]-1}\n{t("Note")}: {result["note"]}")
+                
+                if initial:
+                    sound.play_sound(locally("sounds/loading3.wav"))
+                    threading.Thread(target=q329rhpq4tbp, daemon=True).start()
+                    time.sleep(1)
+
+            #decode the thing
+            image_bytes = base64.b64decode(result["image"])
+
+            img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+
+            data = img.getdata()
+
+            texture_data = []
+            for pixel in data:
+                texture_data.extend([channel / 255 for channel in pixel])
+
+            #show image
+            if len(texture_data) != 300 * 300 * 4:
+                sound.play_sound(locally("sounds/error.wav"))
+                sound.play_sound(locally("sounds/error2.wav"))
+                dpg.set_value("viewer_loading_text", f"{t("ERROR")}: {result["error"]}")
+                done = True
+                loading_sound.stop()
+                current_pos -= increment
+                return
             
-            if initial:
-                sound.play_sound(locally("sounds/loading3.wav"))
-                threading.Thread(target=q329rhpq4tbp, daemon=True).start()
+            def make_texture(img, size):
+                small = img.resize((size, size), Image.Resampling.NEAREST)
+                upscaled = small.resize((300, 300), Image.Resampling.NEAREST)
 
-        #decode the thing
-        image_bytes = base64.b64decode(result["image"])
-
-        img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
-
-        data = img.getdata()
-
-        texture_data = []
-        for pixel in data:
-            texture_data.extend([channel / 255 for channel in pixel])
-
-        #show image
-        if len(texture_data) != 300 * 300 * 4:
-            sound.play_sound(locally("sounds/error.wav"))
-            sound.play_sound(locally("sounds/error2.wav"))
-            dpg.set_value("viewer_loading_text", f"{t("ERROR")}: bad texture size")
-            return
+                arr = np.array(upscaled, dtype=np.float32) / 255.0
+                return arr.flatten()
         
-        def make_texture(img, size):
-            small = img.resize((size, size), Image.Resampling.NEAREST)
-            upscaled = small.resize((300, 300), Image.Resampling.NEAREST)
+            screen_sound = sound.play_sound(locally("sounds/loading4.wav"))
+            levels = [8, 15, 30, 60, 120, 300]
+            for size in levels:
+                tex = make_texture(img, size)
+                dpg.set_value("screenshot_texture", tex)
+                time.sleep(0.2)
+            dpg.set_value("screenshot_texture", texture_data)
+            screen_sound.stop()
 
-            arr = np.array(upscaled, dtype=np.float32) / 255.0
-            return arr.flatten()
-    
-        screen_sound = sound.play_sound(locally("sounds/loading4.wav"))
-        levels = [8, 15, 30, 60, 120, 300]
-        for size in levels:
-            tex = make_texture(img, size)
-            dpg.set_value("screenshot_texture", tex)
-            time.sleep(0.2)
-        dpg.set_value("screenshot_texture", texture_data)
-        screen_sound.stop()
-
-        if not initial:
-            dpg.set_value("viewer_loading_text", f"Note: {result["note"]}")
-
-        dpg.enable_item("view_button")
+            if not initial:
+                dpg.set_value("viewer_loading_text", f"{current_pos}/{result["count"]-1}\n{t("Note")}: {result["note"]}")
+        finally:
+            dpg.enable_item("view_button")
+            update_buttons()
+            done = True
 
     def update_buttons():
         if current_pos <= 0:
@@ -199,7 +234,7 @@ def screenshots():
             current_pos += 1
 
         update_buttons()
-        view_screenie(initial=False)
+        view_screenie(initial=False, increment=1)
 
     def prev_screenie():
         nonlocal current_pos
@@ -231,7 +266,7 @@ def screenshots():
         
         with dpg.group(horizontal=True):
             with dpg.group():
-                dpg.add_input_text(tag="screenie_search", hint=t("search for index"), callback=on_search_change, width=200)
+                dpg.add_input_text(tag="screenie_search", hint=f"<{t("index")}> <{t("screenshot")}>", callback=on_search_change, width=200)
                 dpg.add_listbox([], tag="screenie_list", callback=on_list_click, width=200)
             dpg.add_button(tag="view_button", label=t("view"), width=-1, height=-1, callback=view_screenie)
 

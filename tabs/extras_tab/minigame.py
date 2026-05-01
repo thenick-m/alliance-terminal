@@ -18,15 +18,68 @@ CANVAS_H = ROWS * CELL + PAD * 2 +15
 tab_enter = None
 tab_exit  = None
 
+# --- state ---
+maze          = {}
+player        = [0, 0]
+end_pos       = [ROWS-1, COLS-1]
+trail = []
+
+def cell_px(r, c):
+    return PAD + c * CELL, PAD + r * CELL
+
+def draw_maze():
+    if not dpg.does_item_exist("maze_drawlist"):
+        return
+    dpg.delete_item("maze_drawlist", children_only=True)
+
+    bg  = (*state.color1, 255)
+    col = (*state.color4, 255)
+
+    #background
+    dpg.draw_rectangle((0,0), (CANVAS_W, CANVAS_H),
+                        fill=bg, color=bg, parent="maze_drawlist")
+
+    #start tint
+    sx, sy = cell_px(0, 0)
+    dpg.draw_rectangle((sx,sy), (sx+CELL,sy+CELL),
+                        fill=(*state.color2, 200), color=(*state.color2, 200),
+                        parent="maze_drawlist")
+
+    #end tint
+    ex, ey = cell_px(*end_pos)
+    dpg.draw_rectangle((ex,ey), (ex+CELL,ey+CELL),
+                        fill=(*state.color3, 255), color=(*state.color3, 255),
+                        parent="maze_drawlist")
+
+    #walls
+    for r in range(ROWS):
+        for c in range(COLS):
+            x, y  = cell_px(r, c)
+            walls = maze[(r,c)]['walls']  #T R B L
+            t     = 1.5
+            if walls[0]: dpg.draw_line((x,y),      (x+CELL,y),      color=col, thickness=t, parent="maze_drawlist")
+            if walls[1]: dpg.draw_line((x+CELL,y), (x+CELL,y+CELL), color=col, thickness=t, parent="maze_drawlist")
+            if walls[2]: dpg.draw_line((x,y+CELL), (x+CELL,y+CELL), color=col, thickness=t, parent="maze_drawlist")
+            if walls[3]: dpg.draw_line((x,y),      (x,y+CELL),      color=col, thickness=t, parent="maze_drawlist")
+
+    draw_player()
+
+def draw_player():
+    if not dpg.does_item_exist("maze_drawlist"):
+        return
+    if dpg.does_item_exist("player_dot"):
+        dpg.delete_item("player_dot")
+    r, c   = player
+    x, y   = cell_px(r, c)
+    cx, cy = x + CELL//2, y + CELL//2
+    dpg.draw_circle((cx,cy), CELL//2 - 3,
+                    fill=(*state.color4, 255),
+                    color=(*state.color4, 255),
+                    parent="maze_drawlist",
+                    tag="player_dot")
+
 def minigame():
     global tab_enter, tab_exit
-
-    # --- state ---
-    maze          = {}
-    player        = [0, 0]
-    end_pos       = [ROWS-1, COLS-1]
-    game_active   = [False]
-    trail = []
 
     # --- maze generation ---
     def is_solvable():
@@ -89,61 +142,6 @@ def minigame():
         player[0], player[1] = 0, 0
         draw_maze()
         sound.play_sound(locally("sounds/beep1.wav"))
-
-    # --- drawing ---
-    def cell_px(r, c):
-        return PAD + c * CELL, PAD + r * CELL
-
-    def draw_maze():
-        if not dpg.does_item_exist("maze_drawlist"):
-            return
-        dpg.delete_item("maze_drawlist", children_only=True)
-
-        bg  = (*state.color1, 255)
-        col = (*state.color4, 255)
-
-        #background
-        dpg.draw_rectangle((0,0), (CANVAS_W, CANVAS_H),
-                           fill=bg, color=bg, parent="maze_drawlist")
-
-        #start tint
-        sx, sy = cell_px(0, 0)
-        dpg.draw_rectangle((sx,sy), (sx+CELL,sy+CELL),
-                           fill=(*state.color2, 200), color=(*state.color2, 200),
-                           parent="maze_drawlist")
-
-        #end tint
-        ex, ey = cell_px(*end_pos)
-        dpg.draw_rectangle((ex,ey), (ex+CELL,ey+CELL),
-                           fill=(*state.color3, 255), color=(*state.color3, 255),
-                           parent="maze_drawlist")
-
-        #walls
-        for r in range(ROWS):
-            for c in range(COLS):
-                x, y  = cell_px(r, c)
-                walls = maze[(r,c)]['walls']  #T R B L
-                t     = 1.5
-                if walls[0]: dpg.draw_line((x,y),      (x+CELL,y),      color=col, thickness=t, parent="maze_drawlist")
-                if walls[1]: dpg.draw_line((x+CELL,y), (x+CELL,y+CELL), color=col, thickness=t, parent="maze_drawlist")
-                if walls[2]: dpg.draw_line((x,y+CELL), (x+CELL,y+CELL), color=col, thickness=t, parent="maze_drawlist")
-                if walls[3]: dpg.draw_line((x,y),      (x,y+CELL),      color=col, thickness=t, parent="maze_drawlist")
-
-        draw_player()
-
-    def draw_player():
-        if not dpg.does_item_exist("maze_drawlist"):
-            return
-        if dpg.does_item_exist("player_dot"):
-            dpg.delete_item("player_dot")
-        r, c   = player
-        x, y   = cell_px(r, c)
-        cx, cy = x + CELL//2, y + CELL//2
-        dpg.draw_circle((cx,cy), CELL//2 - 3,
-                        fill=(*state.color4, 255),
-                        color=(*state.color4, 255),
-                        parent="maze_drawlist",
-                        tag="player_dot")
         
     def draw_trail_cell(r, c):
         if not dpg.does_item_exist("maze_drawlist"):
