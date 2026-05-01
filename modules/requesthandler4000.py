@@ -1,12 +1,14 @@
 #requesthandler4000.py
 
+#comment these two for testing
 from modules import discord_auth
 from modules import state
+
 import requests
 import uuid
 import time
 
-#testing
+#uncomment for testing
 #import discord_auth
 
 BASE_URL = "https://x4alliancebackend-default-rtdb.firebaseio.com"
@@ -55,10 +57,16 @@ def editor_login():
     if result["is_editor"]:
         discord_token = result["token"]
 
-        state.editor_mode = True
         print("editor mode enabled")
 
     return result
+
+def get_radio_state():
+    r = requests.get(f"{BASE_URL}/radio.json")
+    return r.json()
+
+def get_screenie(planetid, pos):
+    return request("getscreenie", {"planetID": planetid, "position": pos})
 
 def edit(stringSearchArg):
     return request("edit", {"stringSearchArg": stringSearchArg})
@@ -77,3 +85,5 @@ def count(stringSearchArg:str):
 
 def leaderboard():
     return request("leaderboard")
+
+#testing

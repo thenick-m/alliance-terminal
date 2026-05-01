@@ -12,9 +12,31 @@ class OAuthHandler(BaseHTTPRequestHandler):
         global auth_code
         params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
         auth_code = params.get("code", [None])[0]
+
         self.send_response(200)
+        self.send_header("Content-type", "text/html") 
         self.end_headers()
-        self.wfile.write(b"you can close this window now")
+
+        html = """
+        <html>
+        <head>
+        <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background-image: url('https://i.imgur.com/97g13LX.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #0b0f1a;
+        }
+        </style>
+        </head>
+        <body></body>
+        </html>
+        """
+
+        self.wfile.write(html.encode())
 
     def log_message(self, *args):
         pass

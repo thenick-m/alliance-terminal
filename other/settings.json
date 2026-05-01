@@ -21,9 +21,10 @@
     ],
     "themes": {},
     "lang": "en",
-    "sfx_volume": 1.0,
+    "sfx_volume": 1,
     "noise": true,
     "colorbars": false,
     "always_on_top": true,
-    "token": 0
+    "token": 0,
+    "screenshake": true
 }

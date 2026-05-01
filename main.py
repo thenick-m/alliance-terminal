@@ -4,6 +4,9 @@ import time
 import threading
 import random
 import json
+import subprocess
+import shutil
+import os
 
 from modules import requesthandler4000 as rq
 from modules.state import *
@@ -11,8 +14,12 @@ from modules import state #reimport cached state module into namespace for redun
 from modules import audioshit as sound
 from modules import imagehelpers
 
+#tab shit
+from tabs.extras import extras
+from tabs.extras_tab.minigame import draw_maze
+
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "1.0.0 Alpha"
+VERSION = "2.0 Alpha"
 
 settings = {}
 
@@ -24,7 +31,7 @@ try:
         state.reload_strings()
 
         state.always_on_top = settings["always_on_top"]
-except (FileNotFoundError, json.decoder.JSONDecodeError):
+except FileNotFoundError, json.decoder.JSONDecodeError:
     print("shit")
 
 def make_theme(color1, color2, color3, color4):
@@ -95,22 +102,24 @@ set_theme()
 #font config
 with dpg.font_registry():
     with dpg.font(locally("other/fixedsys.ttf"), 14) as default_font:
-        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
+        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
         dpg.add_font_range(0x0100, 0x017F) #polish
 
+
     with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
-        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
+        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
         dpg.add_font_range(0x0100, 0x017F) #polish
+
         state.big_font = big_font
 
 dpg.bind_font(default_font)
 
-#texture config mainly for noise shit
 with dpg.texture_registry():
     initial = imagehelpers.generate_retro_boi(WIDTH, HEIGHT).convert("RGBA")
     data = [x/255.0 for x in initial.tobytes()]
     dpg.add_dynamic_texture(WIDTH, HEIGHT, data, tag="noise_texture")
 
+    dpg.add_dynamic_texture(300, 300, [0, 0, 0, 0] * (300 * 300), tag="screenshot_texture") #placeholder for screenies
 
 # --- MAIN WINDOW ---
 with dpg.window(label="x4at", tag="main_window"):
@@ -118,6 +127,13 @@ with dpg.window(label="x4at", tag="main_window"):
     def go_through_quit():
         dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
         sound.play_sound(locally("sounds/loading1.wav"))
+
+        dpg.delete_item("logo_image")
+        dpg.delete_item("logo_texture")
+        
+        imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png")).resize((50, 50)))
+        
+        dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
         boot_text = ""
         def add_boot_text(text):
@@ -147,6 +163,7 @@ with dpg.window(label="x4at", tag="main_window"):
             settings["colorbars"] = state.colorbars
             settings["always_on_top"] = state.always_on_top
             settings["token"] = rq.discord_token if rq.discord_token else 0
+            settings["screenshake"] = state.screenshake
 
             json.dump(settings, file, indent=4) #saveshit
 
@@ -160,8 +177,12 @@ with dpg.window(label="x4at", tag="main_window"):
         sound.play_sound(locally("sounds/click.wav"))
         sound.play_sound(locally("sounds/switch.wav"))
         imagehelpers.channel_switch()
+        state.shake_viewport(2)
 
-        tab = dpg.get_item_alias(app_data) #this is supposed to unfuck it since dpg app_data sends as dpg id 
+        tab = dpg.get_item_alias(app_data) #this is supposed to unfuck it since dpg app_data sends as dpg id
+
+        if tab == "extras_tab":
+            dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
 
         if tab == "search_tab":
             if state.search_results_view:
@@ -183,7 +204,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
     
     with dpg.tab_bar(tag="tab_bar", callback=on_tab_switch):
-        #modularized tabs into their own py file in v0.1.0
+        #modularized tabs into their own py files in v0.1.0
 
         # --- SEARCH ---
         with dpg.tab(label=t("search"), tag="search_tab"):
@@ -199,6 +220,10 @@ with dpg.window(label="x4at", tag="main_window"):
         with dpg.tab(label=t("edit"), tag="edit_tab"):
             from tabs.edit import edit
             edit()
+
+        # -- EXTRAS --- added in v1.1.0
+        with dpg.tab(label=t("extras"), tag="extras_tab"):
+            extras()
 
         # --- SETTINGS --- 
         with dpg.tab(label=t("settings"), tag="settings_tab"):
@@ -220,6 +245,7 @@ with dpg.window(label="x4at", tag="main_window"):
                             sound.play_sound(locally("sounds/beep2.wav"))
                             set_theme(self.color1, self.color2, self.color3, self.color4)
                             imagehelpers.channel_switch()
+                            draw_maze()
 
                         def add(self):
                             button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
@@ -338,24 +364,32 @@ with dpg.window(label="x4at", tag="main_window"):
 
                 sound.play_sound(locally("sounds/scroll.wav"), max_time=50)
 
-                sound.sfx_volume = app_data
+                sound.set_volume(app_data)
 
             dpg.add_slider_float(
                 tag="sfx_volume_slider",
                 label=t("sfx volume"),
-                default_value=1,
+                default_value=sound.sfx_volume,
                 min_value=0,
                 max_value=1,
                 callback=change_volume
                 )
             
+            dpg.add_separator()
+            
             def toggle_noise():
                 sound.play_sound(locally("sounds/switch2.wav"))
                 state.noise = not state.noise
 
+            dpg.add_checkbox(tag="retro_effects_toggle", label=t("retro effects"), callback=toggle_noise, default_value=state.noise)
+
+            def toggle_screenshake():
+                sound.play_sound(locally("sounds/switch2.wav"))
+                state.screenshake = not state.screenshake
+
             dpg.add_separator()
 
-            dpg.add_checkbox(tag="retro_effects_toggle", label=t("retro effects"), callback=toggle_noise, default_value=state.noise)
+            dpg.add_checkbox(tag="screenshake_toggle", label=t("screenshake"), callback=toggle_screenshake, default_value=state.screenshake)
 
             def toggle_color_bars():
                 sound.play_sound(locally("sounds/switch2.wav"))
@@ -393,6 +427,15 @@ with dpg.window(label="x4at", tag="main_window"):
             dpg.add_separator()
 
             dpg.hide_item(dpg.add_button(label=t("log out"), tag="log_out", callback=log_out))
+
+
+            def clear_radio():
+                radio_path = savepath("other/radio")
+                shutil.rmtree(radio_path)
+
+            dpg.add_separator()
+
+            dpg.add_button(label=t("clear radio cache"), callback=clear_radio)
             
             def sales_demolition():
                 sound.play_sound(locally("sounds/click2.wav"))
@@ -413,6 +456,7 @@ with dpg.window(label="x4at", tag="main_window"):
             dpg.add_separator()
 
             dpg.add_button(label=t("recompute base encryption hash key"), callback=sales_demolition)
+
 
 # --- startup sequence --- 
 with dpg.window(tag="startup_window"):
@@ -444,7 +488,7 @@ def boot_sequence():
         border_thing = "-"*int((border_string_length-len(title)-(2 if title else 0))/2) #Hi
         add_boot_text(f"{border_thing}{f" {title} " if title else ""}{border_thing}")
         
-    sound.play_sound(locally("sounds/startup.wav"), 0.3)
+    sound.play_sound(locally("sounds/startup.wav"))
     add_boot_text(METATEXT)
     add_boot_text(f"v{VERSION}")
 
@@ -455,13 +499,13 @@ def boot_sequence():
     try:
         with open(savepath('other/settings.json'), 'r', encoding='utf-8') as file:
             settings = json.load(file)
-    except (FileNotFoundError, json.decoder.JSONDecodeError):
+    except FileNotFoundError, json.decoder.JSONDecodeError:
         try:
             with open(locally('other/settings.json'), 'r', encoding='utf-8') as file:
                 settings = json.load(file)
-        except (FileNotFoundError, json.decoder.JSONDecodeError):
+        except FileNotFoundError, json.decoder.JSONDecodeError:
             add_boot_text(t("loading with default settings..."))
-            settings = {
+            settings = { #saveshit
                 "color1": [20, 13, 8],
                 "color2": [40, 20, 5],
                 "color3": [84, 41, 9],
@@ -472,8 +516,23 @@ def boot_sequence():
                 "noise": True,
                 "colorbars": False,
                 "always_on_top": True,
-                "token": 0
+                "token": 0,
+                "screenshake": True
             }
+
+    ytdlp_savepath = savepath("other/yt-dlp.exe")
+    if not os.path.exists(ytdlp_savepath):
+        shutil.move(locally("other/yt-dlp.exe"), ytdlp_savepath)
+
+    ytdlp_update = threading.Thread(
+        target=subprocess.run,
+        args=([ytdlp_savepath, "--update"],),
+        kwargs={
+            "capture_output": True, 
+            "creationflags": subprocess.CREATE_NO_WINDOW 
+        }
+    )
+    ytdlp_update.start()
 
     #load custom themes
     for name, theme in settings["themes"].items():
@@ -510,13 +569,19 @@ def boot_sequence():
     state.noise = settings["noise"]
     dpg.set_value("retro_effects_toggle", state.noise)
 
+    #screenshake
+    state.screenshake = settings["screenshake"]
+    dpg.set_value("screenshake_toggle", state.screenshake)
+
     #colorbars
     state.colorbars = settings["colorbars"]
     dpg.set_value("colorbars_toggle", state.colorbars)
 
     imagehelpers.channel_switch()
+    state.shake_viewport()
     sound.play_sound(locally("sounds/static.wav"))
     set_theme(state.color1, state.color2, state.color3, state.color4)
+    draw_maze()
 
     dpg.delete_item("logo_image")
     dpg.delete_item("logo_texture")
@@ -525,6 +590,11 @@ def boot_sequence():
     
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
+    if ytdlp_update is not None and ytdlp_update.is_alive():
+        add_boot_text("updating yt-dlp...")
+        while ytdlp_update.is_alive():
+            sound.play_sound(locally("sounds/blip2.wav"))
+            time.sleep(0.5)
 
     add_boot_text(t("starting main window..."))
     time.sleep(0.1)
@@ -570,8 +640,7 @@ dpg.set_primary_window("startup_window", True)
 dpg.hide_item("main_window")
 threading.Thread(target=boot_sequence, daemon=True).start()
 
-#framerate shit
-
+#framerate
 target_fps = 45
 frame_time = 1.0 / target_fps
 

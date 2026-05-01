@@ -31,7 +31,6 @@
     "[ ENVIRONMENT ]": "[ ŚRODOWISKO ]",
     "[ OTHER ]": "[ INNE ]",
     "[ RESOURCES ]": "[ ZASOBY ]",
-    "[half-shaded] = Unknown\\n[fully-shaded] = Known": "[Połowo-ocienione] = Nieznane\\n[Pełni ocienione] = Znane",
     "No resources logged": "Brak znalezionych zasobów",
     "[ DEPOSITS ]": "[ ZŁOŻA ]",
     "None": "Brak",

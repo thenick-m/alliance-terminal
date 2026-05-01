@@ -148,6 +148,7 @@ def search():
     def submit_search():
 
         sound.play_sound(locally("sounds/submit5.wav"))
+        state.shake_viewport()
 
         if not complete_conditions:
             return
