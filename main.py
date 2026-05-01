@@ -16,6 +16,7 @@ from modules import imagehelpers
 
 #tab shit
 from tabs.extras import extras
+from tabs.extras_tab.minigame import draw_maze
 
 METATEXT = "x4AllianceTerminal by thenick_m & willow"
 VERSION = "2.0 Alpha"
@@ -127,6 +128,13 @@ with dpg.window(label="x4at", tag="main_window"):
         dpg.configure_viewport(0, width=WIDTH, height=WIDTH)
         sound.play_sound(locally("sounds/loading1.wav"))
 
+        dpg.delete_item("logo_image")
+        dpg.delete_item("logo_texture")
+        
+        imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png")).resize((50, 50)))
+        
+        dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
+
         boot_text = ""
         def add_boot_text(text):
             nonlocal boot_text
@@ -237,6 +245,7 @@ with dpg.window(label="x4at", tag="main_window"):
                             sound.play_sound(locally("sounds/beep2.wav"))
                             set_theme(self.color1, self.color2, self.color3, self.color4)
                             imagehelpers.channel_switch()
+                            draw_maze()
 
                         def add(self):
                             button = dpg.add_button(label=self.name, width=100, height=-1, callback=lambda: self.change_theme())
@@ -449,7 +458,6 @@ with dpg.window(label="x4at", tag="main_window"):
             dpg.add_button(label=t("recompute base encryption hash key"), callback=sales_demolition)
 
 
-
 # --- startup sequence --- 
 with dpg.window(tag="startup_window"):
 
@@ -516,7 +524,6 @@ def boot_sequence():
     if not os.path.exists(ytdlp_savepath):
         shutil.move(locally("other/yt-dlp.exe"), ytdlp_savepath)
 
-    add_boot_text("starting yt-dlp update thread...")
     ytdlp_update = threading.Thread(
         target=subprocess.run,
         args=([ytdlp_savepath, "--update"],),
@@ -574,6 +581,7 @@ def boot_sequence():
     state.shake_viewport()
     sound.play_sound(locally("sounds/static.wav"))
     set_theme(state.color1, state.color2, state.color3, state.color4)
+    draw_maze()
 
     dpg.delete_item("logo_image")
     dpg.delete_item("logo_texture")
@@ -582,7 +590,6 @@ def boot_sequence():
     
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
-    add_boot_text("checking yt-dlp thread...")
     if ytdlp_update is not None and ytdlp_update.is_alive():
         add_boot_text("updating yt-dlp...")
         while ytdlp_update.is_alive():
