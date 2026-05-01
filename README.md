@@ -10,6 +10,8 @@ This is the desktop version of a discord bot x4Alliance which stores a database 
 
 ## Translators:
 * English (original) : thenick_m
+* Spanish : lenkuti
+* French : lenkuti
 * Russian : willowself
 * Polish : yuyuyut_p
 
