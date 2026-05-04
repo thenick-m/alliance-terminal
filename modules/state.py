@@ -93,6 +93,8 @@ always_on_top = True
 
 screenshake = True
 
+copy_on_get = True
+
 with open(locally("other/fields.json"), "r") as f:
     field_data = json.load(f)
 

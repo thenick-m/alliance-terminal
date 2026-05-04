@@ -75,7 +75,7 @@ def ping():
     return request("ping")
 
 def search(stringSearchArg:str):
-    return request("search", {"stringSearchArg": stringSearchArg}, polls=10)
+    return request("search", {"stringSearchArg": stringSearchArg})
 
 def get(planetID:str):
     return request("get", {"planetID": planetID}, polls=7)

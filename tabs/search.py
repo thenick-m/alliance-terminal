@@ -2,6 +2,7 @@ from dearpygui import dearpygui as dpg
 import threading
 import pyautogui
 import time
+import pyperclip
 
 from modules import requesthandler4000 as rq
 from modules import audioshit as sound
@@ -210,6 +211,9 @@ def search():
                 def change_get_planet(sender):
                     sound.play_sound(locally("sounds/click2.wav"))
                     populate_get_tab(results_dict[sender])  #sets state.current_get_planet internally
+                    if state.copy_on_get:
+                        pyperclip.copy(sender)
+
                     dpg.set_value("tab_bar", "get_tab")
 
                 dpg.add_button(label=t("get"), width=80, height=300, tag=f"{result[0]}", parent=child, pos=(210, 10),
