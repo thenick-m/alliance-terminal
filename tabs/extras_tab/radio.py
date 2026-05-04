@@ -32,9 +32,8 @@ def add_radio_line(text):
     def update_radio_line(text="", user="radio"):
         radio_lines.append(text)
         dpg.set_value("radio_line", "\n".join(f"{t(user)}> {txt}" for txt in radio_lines))
-        dpg.set_y_scroll("radio_line_window", -1.0)
+        dpg.set_y_scroll("radio_line_window", dpg.get_y_scroll_max("radio_line_window"))
         sound.play_sound(locally("sounds/blip2.wav"))
-        time.sleep(0.03)
 
     #init
     if text == "/init":
@@ -50,6 +49,7 @@ def add_radio_line(text):
         update_radio_line(t("press 'connect radio' to connect"))
     else:
         update_radio_line(text)
+        time.sleep(0.03)
 
 def play_radio_state(radio_state):
     filename = radio_state['url'].split("v=")[-1]
@@ -126,6 +126,7 @@ def radio():
         dpg.enable_item("radio_button")
 
     def deactivate_radio():
+        global radio_lines; radio_lines = []
         dpg.disable_item("radio_button")
         sound.play_sound(locally("sounds/click2.wav"))
 
@@ -158,8 +159,8 @@ def radio():
                     max_value=1,
                     callback=radio_volume_callback)
                     )
-        with dpg.child_window(tag="radio_line_window", width=-1, height=235):
-            dpg.add_text(tag="radio_line", wrap=280)
+        with dpg.child_window(tag="radio_line_window", width=-1, height=235): #TODO: rebuild this piece of shit
+            dpg.add_text(tag="radio_line")
         dpg.hide_item("radio_line_window")
 
     dpg.add_button(label=t("startup radio"), tag="radio_button", width=-1, height=-1, callback=larp_startup)
