@@ -46,7 +46,8 @@ def make_theme(color1, color2, color3, color4):
             dpg.add_theme_style(dpg.mvStyleVar_TabRounding, 0, category=dpg.mvThemeCat_Core)
             dpg.add_theme_style(dpg.mvStyleVar_ScrollbarRounding, 0, category=dpg.mvThemeCat_Core)
             dpg.add_theme_color(dpg.mvPlotCol_Fill, color4, category=dpg.mvThemeCat_Plots)
-            dpg.add_theme_color(dpg.mvThemeCol_Tab, color2)            
+            dpg.add_theme_color(dpg.mvThemeCol_Tab, color2)
+            dpg.add_theme_color(dpg.mvThemeCol_PlotHistogram, color4)            
             dpg.add_theme_color(dpg.mvThemeCol_ModalWindowDimBg, color2+(100,))
             dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, color2)
             dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, color3)
@@ -101,15 +102,10 @@ set_theme()
 
 #font config
 with dpg.font_registry():
-    with dpg.font(locally("other/fixedsys.ttf"), 14) as default_font:
-        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
-        dpg.add_font_range(0x0100, 0x017F) #polish
 
+    default_font = dpg.add_font(locally("other/fixedsys.ttf"), 14)
 
     with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
-        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
-        dpg.add_font_range(0x0100, 0x017F) #polish
-
         state.big_font = big_font
 
 dpg.bind_font(default_font)
@@ -120,6 +116,8 @@ with dpg.texture_registry():
     dpg.add_dynamic_texture(WIDTH, HEIGHT, data, tag="noise_texture")
 
     dpg.add_dynamic_texture(300, 300, [0, 0, 0, 0] * (300 * 300), tag="screenshot_texture") #placeholder for screenies
+
+    dpg.add_dynamic_texture(300, 300, [0, 0, 0, 0] * (300 * 300), tag="radio_texture")
 
 # --- MAIN WINDOW ---
 with dpg.window(label="x4at", tag="main_window"):
@@ -439,6 +437,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
 
             def clear_radio():
+                sound.play_sound(locally("sounds/click2.wav"))
                 radio_path = savepath("other/radio")
                 shutil.rmtree(radio_path)
 
