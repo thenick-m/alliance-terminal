@@ -186,7 +186,7 @@ def screenshots():
             if len(texture_data) != 300 * 300 * 4:
                 sound.play_sound(locally("sounds/error.wav"))
                 sound.play_sound(locally("sounds/error2.wav"))
-                dpg.set_value("viewer_loading_text", f"{t("ERROR")}: {result["error"]}")
+                dpg.set_value("viewer_loading_text", f"{t("ERROR")}: bad texture size")
                 done = True
                 loading_sound.stop()
                 current_pos -= increment
