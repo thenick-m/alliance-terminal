@@ -71,7 +71,7 @@
     "[ LANGUAGES ]": "[ LANGUES ]",
     "restart": "redémarrer",
     "Restart program for lang change to take effect": "Redémarrez le programme pour que le changement de langue prenne effet",
-       "clear radio cache": "nettoyer le cache de la radio",
+    "clear radio cache": "nettoyer le cache de la radio",
     "screenshots": "captures d’écran",
     "screenshot": "capture d’écran",
     "radio": "radio",
@@ -96,5 +96,7 @@
     "Note": "Note",
     "extras": "extras",
     "starting radio": "démarrage de la radio",
+    "copy on get": "copier automatiquement",
+    "radio quality": "qualité audio",
     "creditTranslationMadeBy": "lenkuti"
 }

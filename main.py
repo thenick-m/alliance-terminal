@@ -46,7 +46,8 @@ def make_theme(color1, color2, color3, color4):
             dpg.add_theme_style(dpg.mvStyleVar_TabRounding, 0, category=dpg.mvThemeCat_Core)
             dpg.add_theme_style(dpg.mvStyleVar_ScrollbarRounding, 0, category=dpg.mvThemeCat_Core)
             dpg.add_theme_color(dpg.mvPlotCol_Fill, color4, category=dpg.mvThemeCat_Plots)
-            dpg.add_theme_color(dpg.mvThemeCol_Tab, color2)            
+            dpg.add_theme_color(dpg.mvThemeCol_Tab, color2)
+            dpg.add_theme_color(dpg.mvThemeCol_PlotHistogram, color4)            
             dpg.add_theme_color(dpg.mvThemeCol_ModalWindowDimBg, color2+(100,))
             dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, color2)
             dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, color3)
@@ -101,15 +102,10 @@ set_theme()
 
 #font config
 with dpg.font_registry():
-    with dpg.font(locally("other/fixedsys.ttf"), 14) as default_font:
-        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
-        dpg.add_font_range(0x0100, 0x017F) #polish
 
+    default_font = dpg.add_font(locally("other/fixedsys.ttf"), 14)
 
     with dpg.font(locally("other/fixedsys.ttf"), 25) as big_font:
-        dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic) #russian
-        dpg.add_font_range(0x0100, 0x017F) #polish
-
         state.big_font = big_font
 
 dpg.bind_font(default_font)
@@ -120,6 +116,8 @@ with dpg.texture_registry():
     dpg.add_dynamic_texture(WIDTH, HEIGHT, data, tag="noise_texture")
 
     dpg.add_dynamic_texture(300, 300, [0, 0, 0, 0] * (300 * 300), tag="screenshot_texture") #placeholder for screenies
+
+    dpg.add_dynamic_texture(300, 300, [0, 0, 0, 0] * (300 * 300), tag="radio_texture")
 
 # --- MAIN WINDOW ---
 with dpg.window(label="x4at", tag="main_window"):
@@ -164,6 +162,8 @@ with dpg.window(label="x4at", tag="main_window"):
             settings["always_on_top"] = state.always_on_top
             settings["token"] = rq.discord_token if rq.discord_token else 0
             settings["screenshake"] = state.screenshake
+            settings["copy_on_get"] = state.copy_on_get
+            settings["radio_quality"] = state.radio_quality
 
             json.dump(settings, file, indent=4) #saveshit
 
@@ -376,6 +376,15 @@ with dpg.window(label="x4at", tag="main_window"):
                 )
             
             dpg.add_separator()
+
+            def change_radio_quality(_, app_data):
+                sound.play_sound(locally("sounds/switch2.wav"))
+                state.radio_quality = app_data
+
+            dpg.add_text(t("radio quality"))
+            dpg.add_radio_button(tag="radio_quality_choice", items=["48K","64K","128K"], callback=change_radio_quality)
+
+            dpg.add_separator()
             
             def toggle_noise():
                 sound.play_sound(locally("sounds/switch2.wav"))
@@ -391,17 +400,27 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_checkbox(tag="screenshake_toggle", label=t("screenshake"), callback=toggle_screenshake, default_value=state.screenshake)
 
-            def toggle_color_bars():
+            def toggle_colorbars():
                 sound.play_sound(locally("sounds/switch2.wav"))
                 state.colorbars = not state.colorbars
 
             dpg.add_separator()
 
-            dpg.add_checkbox(tag="colorbars_toggle", label=t("colored resource bars"), callback=toggle_color_bars, default_value=state.colorbars)
+            def toggle_copy_on_get():
+                sound.play_sound(locally("sounds/switch2.wav"))
+                state.copy_on_get = not state.copy_on_get
+                print
+
+            dpg.add_checkbox(tag="copy_toggle", label=t("copy on get"), callback=toggle_copy_on_get, default_value=state.screenshake)
+
+            dpg.add_separator()
+
+            dpg.add_checkbox(tag="colorbars_toggle", label=t("colored resource bars"), callback=toggle_colorbars, default_value=state.colorbars)
 
             def toggle_always_top():
                 sound.play_sound(locally("sounds/switch2.wav"))
-                dpg.set_viewport_always_top(not dpg.is_viewport_always_top())
+                state.always_on_top = not state.always_on_top
+                dpg.set_viewport_always_top(state.always_on_top)
 
             dpg.add_separator()
 
@@ -430,6 +449,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
 
             def clear_radio():
+                sound.play_sound(locally("sounds/click2.wav"))
                 radio_path = savepath("other/radio")
                 shutil.rmtree(radio_path)
 
@@ -492,7 +512,7 @@ def boot_sequence():
     add_boot_text(METATEXT)
     add_boot_text(f"v{VERSION}")
 
-    #LOAD SETTINGS
+    #load saveshit
     global settings
 
     add_boot_border(t("LOADING SETTINGS"))
@@ -517,7 +537,9 @@ def boot_sequence():
                 "colorbars": False,
                 "always_on_top": True,
                 "token": 0,
-                "screenshake": True
+                "screenshake": True,
+                "copy_on_get": True,
+                "radio_quality": "48K"
             }
 
     ytdlp_savepath = savepath("other/yt-dlp.exe")
@@ -577,19 +599,28 @@ def boot_sequence():
     state.colorbars = settings["colorbars"]
     dpg.set_value("colorbars_toggle", state.colorbars)
 
+    #copy on get
+    state.copy_on_get = settings["copy_on_get"]
+    dpg.set_value("copy_toggle", state.copy_on_get)
+
+    #radio quality
+    state.radio_quality = settings["radio_quality"]
+    dpg.set_value("radio_quality_choice", state.radio_quality)
+
+    #set theme
     imagehelpers.channel_switch()
     state.shake_viewport()
     sound.play_sound(locally("sounds/static.wav"))
     set_theme(state.color1, state.color2, state.color3, state.color4)
     draw_maze()
 
+    #logoshit
     dpg.delete_item("logo_image")
     dpg.delete_item("logo_texture")
-    
     imagehelpers.load_pil_image("logo_texture", imagehelpers.retroify(locally("other/logo.png")).resize((50, 50)))
-    
     dpg.add_image("logo_texture", pos=(270, 250), tag="logo_image", parent="startup_window")
 
+    #ytdlp
     if ytdlp_update is not None and ytdlp_update.is_alive():
         add_boot_text("updating yt-dlp...")
         while ytdlp_update.is_alive():
@@ -612,7 +643,8 @@ dpg.create_viewport(title="x4AllianceTerminal",
                     min_width=WIDTH,
                     max_width=WIDTH,
                     min_height=WIDTH,
-                    max_height=HEIGHT) #no fullscreen no fullscreen NO FULLSCREEN NO FUCKING FULLSCREEN
+                    max_height=HEIGHT,
+                    resizable=False) #no fullscreen no fullscreen NO FULLSCREEN NO FUCKING FULLSCREEN
 
 #more noise shit
 def animate_noise():

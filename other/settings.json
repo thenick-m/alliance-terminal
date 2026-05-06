@@ -26,5 +26,7 @@
     "colorbars": false,
     "always_on_top": true,
     "token": 0,
-    "screenshake": true
+    "screenshake": true,
+    "copy_on_get": true,
+    "radio_quality": "48K"
 }
