@@ -95,5 +95,7 @@
     "view": "view",
     "Note": "Note",
     "extras": "extras",
-    "starting radio": "starting radio"
+    "starting radio": "starting radio",
+    "copy on get": "copy on get",
+    "radio quality": "radio quality"
 }

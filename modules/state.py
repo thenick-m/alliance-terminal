@@ -9,7 +9,7 @@ import json
 #base_dir init
 if hasattr(sys, '_MEIPASS'):  #pyinstaller
     BASE_DIR = sys._MEIPASS
-elif getattr(sys, 'frozen', False):  #nuitka
+elif getattr(sys, 'frozen', False):  #don't use nuitka anymore but i'm leaving it just in case
     BASE_DIR = os.path.dirname(sys.executable)
 else:
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -94,6 +94,8 @@ always_on_top = True
 screenshake = True
 
 copy_on_get = True
+
+radio_quality = "48K"
 
 with open(locally("other/fields.json"), "r") as f:
     field_data = json.load(f)

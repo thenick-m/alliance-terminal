@@ -7,6 +7,7 @@ from PIL import Image
 
 from modules import audioshit as sound
 from modules import requesthandler4000 as rq
+from modules import state
 from modules.state import *
 
 import subprocess
@@ -21,7 +22,7 @@ def download_audio(url, filename):
         "--convert-thumbnails", "jpg",
         "--extract-audio",
         "--audio-format", "mp3",
-        "--audio-quality", "48K",
+        "--audio-quality", state.radio_quality,
         "--ffmpeg-location", locally("other"),
         "--quiet"
     ], creationflags=subprocess.CREATE_NO_WINDOW)
@@ -204,15 +205,15 @@ def radio():
                     vertical=True,
                     default_value=sound.radio_volume,
                     format="%.1f",
-                    height=260,
+                    height=259,
                     width=30,
                     min_value=0,
                     max_value=1,
                     callback=radio_volume_callback)
                     )
-        with dpg.group(tag="radio_group"): #TODO: rebuild this piece of shit
+        with dpg.group(tag="radio_group"):
             with dpg.child_window(tag="radio_line_window", width=-1, height=125):
-                dpg.add_text(tag="radio_line")
+                dpg.add_text(tag="radio_line", wrap=225)
 
             dpg.add_progress_bar(tag="radio_progress", width=-1, height=10)
             

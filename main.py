@@ -163,6 +163,7 @@ with dpg.window(label="x4at", tag="main_window"):
             settings["token"] = rq.discord_token if rq.discord_token else 0
             settings["screenshake"] = state.screenshake
             settings["copy_on_get"] = state.copy_on_get
+            settings["radio_quality"] = state.radio_quality
 
             json.dump(settings, file, indent=4) #saveshit
 
@@ -375,6 +376,15 @@ with dpg.window(label="x4at", tag="main_window"):
                 )
             
             dpg.add_separator()
+
+            def change_radio_quality(_, app_data):
+                sound.play_sound(locally("sounds/switch2.wav"))
+                state.radio_quality = app_data
+
+            dpg.add_text(t("radio quality"))
+            dpg.add_radio_button(tag="radio_quality_choice", items=["48K","64K","128K"], callback=change_radio_quality)
+
+            dpg.add_separator()
             
             def toggle_noise():
                 sound.play_sound(locally("sounds/switch2.wav"))
@@ -390,7 +400,7 @@ with dpg.window(label="x4at", tag="main_window"):
 
             dpg.add_checkbox(tag="screenshake_toggle", label=t("screenshake"), callback=toggle_screenshake, default_value=state.screenshake)
 
-            def toggle_color_bars():
+            def toggle_colorbars():
                 sound.play_sound(locally("sounds/switch2.wav"))
                 state.colorbars = not state.colorbars
 
@@ -398,17 +408,19 @@ with dpg.window(label="x4at", tag="main_window"):
 
             def toggle_copy_on_get():
                 sound.play_sound(locally("sounds/switch2.wav"))
-                state.colorbars = not state.colorbars
+                state.copy_on_get = not state.copy_on_get
+                print
 
             dpg.add_checkbox(tag="copy_toggle", label=t("copy on get"), callback=toggle_copy_on_get, default_value=state.screenshake)
 
             dpg.add_separator()
 
-            dpg.add_checkbox(tag="colorbars_toggle", label=t("colored resource bars"), callback=toggle_color_bars, default_value=state.colorbars)
+            dpg.add_checkbox(tag="colorbars_toggle", label=t("colored resource bars"), callback=toggle_colorbars, default_value=state.colorbars)
 
             def toggle_always_top():
                 sound.play_sound(locally("sounds/switch2.wav"))
-                dpg.set_viewport_always_top(not dpg.is_viewport_always_top())
+                state.always_on_top = not state.always_on_top
+                dpg.set_viewport_always_top(state.always_on_top)
 
             dpg.add_separator()
 
@@ -500,7 +512,7 @@ def boot_sequence():
     add_boot_text(METATEXT)
     add_boot_text(f"v{VERSION}")
 
-    #LOAD SETTINGS
+    #load saveshit
     global settings
 
     add_boot_border(t("LOADING SETTINGS"))
@@ -526,7 +538,8 @@ def boot_sequence():
                 "always_on_top": True,
                 "token": 0,
                 "screenshake": True,
-                "copy_on_get": True
+                "copy_on_get": True,
+                "radio_quality": "48K"
             }
 
     ytdlp_savepath = savepath("other/yt-dlp.exe")
@@ -586,8 +599,13 @@ def boot_sequence():
     state.colorbars = settings["colorbars"]
     dpg.set_value("colorbars_toggle", state.colorbars)
 
+    #copy on get
     state.copy_on_get = settings["copy_on_get"]
     dpg.set_value("copy_toggle", state.copy_on_get)
+
+    #radio quality
+    state.radio_quality = settings["radio_quality"]
+    dpg.set_value("radio_quality_choice", state.radio_quality)
 
     #set theme
     imagehelpers.channel_switch()
@@ -625,7 +643,8 @@ dpg.create_viewport(title="x4AllianceTerminal",
                     min_width=WIDTH,
                     max_width=WIDTH,
                     min_height=WIDTH,
-                    max_height=HEIGHT) #no fullscreen no fullscreen NO FULLSCREEN NO FUCKING FULLSCREEN
+                    max_height=HEIGHT,
+                    resizable=False) #no fullscreen no fullscreen NO FULLSCREEN NO FUCKING FULLSCREEN
 
 #more noise shit
 def animate_noise():
