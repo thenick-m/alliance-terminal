@@ -653,8 +653,8 @@ def edit():
     dpg.hide_item("edit_loading_text_error")
 
     dpg.hide_item(dpg.add_text(tag="edit_loading_text")) #loading text
-    dpg.hide_item(dpg.add_button(tag="edit_back_button_error", label=t("back to numpad"), height=20, width=-1, callback=back_to_numpad))
-    dpg.hide_item(dpg.add_button(tag="edit_back_button", label=t("back to edit"), height=20, width=-1, callback=back_to_edit))
+    dpg.hide_item(dpg.add_button(tag="edit_back_button_error", label=t("back to numpad"), height=40, width=-1, callback=back_to_numpad))
+    dpg.hide_item(dpg.add_button(tag="edit_back_button", label=t("back to edit"), height=40, width=-1, callback=back_to_edit))
 
     with dpg.child_window(width=-1, height=-1, tag="edit_window", border=False):
 

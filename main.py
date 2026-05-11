@@ -633,7 +633,6 @@ def boot_sequence():
     time.sleep(0.5)
     end_boot_sequence()
     
-
 dpg.create_viewport(title="x4AllianceTerminal", 
                     small_icon=locally("other/logo.ico"), 
                     large_icon=locally("other/logo.ico"), 
