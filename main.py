@@ -18,8 +18,8 @@ from modules import imagehelpers
 from tabs.extras import extras
 from tabs.extras_tab.minigame import draw_maze
 
-METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "2.0 Alpha"
+METATEXT = "x4AllianceTerminal"
+VERSION = "2.6 Alpha"
 
 settings = {}
 
