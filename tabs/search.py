@@ -274,7 +274,7 @@ def search():
         dpg.add_button(label=t("back"), tag="back_button",
                     callback=switch_search_view,
                     width=-1,
-                    height=20)
+                    height=-1)
         dpg.hide_item("back_button")
 
         with dpg.group(horizontal=True, tag="condition_and_button"):

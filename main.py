@@ -18,8 +18,8 @@ from modules import imagehelpers
 from tabs.extras import extras
 from tabs.extras_tab.minigame import draw_maze
 
-METATEXT = "x4AllianceTerminal by thenick_m & willow"
-VERSION = "2.0 Alpha"
+METATEXT = "x4AllianceTerminal"
+VERSION = "2.6 Alpha"
 
 settings = {}
 
@@ -633,7 +633,6 @@ def boot_sequence():
     time.sleep(0.5)
     end_boot_sequence()
     
-
 dpg.create_viewport(title="x4AllianceTerminal", 
                     small_icon=locally("other/logo.ico"), 
                     large_icon=locally("other/logo.ico"), 

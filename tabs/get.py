@@ -83,6 +83,22 @@ def populate_get_tab(planet):
     def edit_call(sender):
         dpg.set_value("tab_bar", "edit_tab")
         dpg.set_value("index_input", sender.split("...")[0])
+
+        state.current_edit_planet = None
+        state.current_edit_index = None
+
+        #this is really hacky but it works
+        dpg.hide_item("edit_window")
+        dpg.hide_item("back_edit")
+        dpg.hide_item("edit_loading_text")
+        dpg.hide_item("submit_edit")
+        dpg.show_item("leaderboard_window")
+        dpg.show_item("numpad_edit")
+        dpg.hide_item("edit_loading_text_error")
+        dpg.set_value("edit_loading_text_error", f"{t("ERROR")}")
+
+        dpg.hide_item("edit_back_button_error")
+        dpg.hide_item("edit_back_button")
     
     if rq.discord_token:
         with dpg.group(horizontal=True, parent="get_tab_content"):
@@ -332,4 +348,4 @@ def get():
         state.current_get_planet = None
         switch_get_view()
 
-    dpg.hide_item(dpg.add_button(tag="back_get", label="back to numpad", width=-1, height=20, callback=back_to_numpad))
+    dpg.hide_item(dpg.add_button(tag="back_get", label="back to numpad", width=-1, height=-1, callback=back_to_numpad))

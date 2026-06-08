@@ -3,7 +3,7 @@ import time
 import os
 
 from dearpygui import dearpygui as dpg
-from PIL import Image
+from PIL import Image, ImageOps
 
 from modules import audioshit as sound
 from modules import requesthandler4000 as rq
@@ -58,8 +58,7 @@ def clear_lines():
 def set_radio_image(path):
 
     img = Image.open(path).convert("RGBA")
-    img = img.resize((300, 300), Image.Resampling.LANCZOS)
-
+    img = ImageOps.fit(img, (300, 300), Image.Resampling.LANCZOS)
     data = img.getdata()
 
     texture_data = []
@@ -110,7 +109,7 @@ def play_radio_state(radio_state):
 def progress_bar_update_loop(started_at, duration, sleep_for):
     global radio_active
 
-    updates = 60
+    updates = 120
     for _ in range(updates):
         if not radio_active:
             return
