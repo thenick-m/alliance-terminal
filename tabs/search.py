@@ -146,6 +146,15 @@ def search():
         complete_conditions.pop(complete_conditions.index(app_data))
         dpg.configure_item("condition_list", items=complete_conditions)
 
+    def _sort_key(index_str):
+        key = []
+        for part in index_str.split("-"):
+            try:
+                key.append((0, int(part)))
+            except ValueError:
+                key.append((1, part))
+        return tuple(key)
+
     def submit_search():
 
         sound.play_sound(locally("sounds/submit5.wav"))
@@ -173,9 +182,7 @@ def search():
             results_dict = {result[0]: result[1] for result in results}
 
             #copied sorting code from x4a
-            results = [(tuple([int(id_num) for id_num in result[0].split("-")]), result[1]) for result in results] #turn StarID into int tuple
-            results = sorted(results) #sort matches
-            results = [("-".join([str(id_num) for id_num in result[0]]), result[1]) for result in results] #turn int tuple into StarID
+            results = sorted(results, key=lambda match: _sort_key(match[0]))
 
             for i, result in enumerate(results):
                 

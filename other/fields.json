@@ -1,5 +1,5 @@
 {
-    "resource_fields": 
+    "resource_fields":
         ["Hematite",
         "Malachite",
         "Gummite",
@@ -20,19 +20,25 @@
         "Sulfur": [],
         "Cerussite": [],
         "Lime": ["true", "false"],
-        "Quartz": [],
+        "Quartz": ["true", "false"],
         "Saltpeter": ["true", "false"],
         "Bauxite": [],
         "Tektite": [],
-        "Tag": [],
+        "Tag": ["awesome", "insane"],
         "Life": ["true", "false"],
-        "Note": [],
-        "Oceans": ["water", "acid", "air", "blood", "methane", "ammonia", "lava"],
-        "Atmosphere": ["terran", "martian", "venusian", "steam", "jovian", "titanean", "alkali", "silicate", "none"],
-        "Tectonics": ["dunes", "ridges", "mountains", "continental", "chaos", "jovian"],
+        "LifeType": ["simple", "oceanic", "ground"],
+        "Note": ["FUK U"],
+        "Oceans": ["water", "acid", "air", "blood", "methane", "ammonia", "lava", "sulfuric", "metallic hydrogen", "carbon dioxide", "algae", "retinal", "iron", "oxygen", "tar"],
+        "Atmosphere": ["terran", "martian", "venusian", "steam", "jovian", "neptunian", "titanean", "alkali", "silicate", "snowfall", "turbulent", "tenuous", "gaian", "ephemeral", "titanian", "alkaki", "halide", "morgoftian", "none", "fumic"],
+        "Tectonics": ["dunes", "ridges", "mountains", "continental", "chaos", "calvic", "cryic", "ancient", "ancientbasins", "shell", "basaltic", "smallbasaltic", "felsic", "floating", "gelidic", "sponge", "mafic", "simatic", "galactic", "smallgalactic", "algidic", "mélange", "jovian", "neptunian"],
+        "Rings": ["fire", "turquoise", "saturnian", "azure", "chariklo", "ninja", "wide", "thin"],
+        "Habitability": [],
+        "SpaceEngineClassification": [],
+        "Spawnable": ["true", "false"],
+        "RadiusStuds": [],
         "Moons": [],
         "Name": [],
-        "Trees": ["poppy", "lepidodendron", "oak", "earthstar", "palm", "deathcap", "willow", "pine", "mold", "cherry"],
+        "Trees": ["poppy", "lepidodendron", "oak", "earthstar", "palm", "deathcap", "willow", "pine", "mold", "cherry", "ajisa"],
         "StarID": [],
         "PlanetID": [],
         "Hardcoded": ["true", "false"],
@@ -45,5 +51,5 @@
         "Screenshots": ["true", "false"],
         "SpectralType": []
     },
-    "operators": ["==", "!=", ">", "<", ">=", "<=", "is", "are", "arent", "isnt", "over", "under", "has", "lacks"]
+    "operators": ["==", "=", "!=", "~=", ">", "<", ">=", "<=", "=<", "=>", "<>", "is", "are", "arent", "isnt", "over", "under", "has", "lacks", "@", "#"]
 }

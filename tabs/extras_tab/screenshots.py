@@ -62,6 +62,7 @@ def screenshots():
                 dpg.show_item("screenie_group")
         finally:
             dpg.enable_item("viewer_button")
+            
     #autofill shit
     def filter_ids(text):
         text = text.lower()
