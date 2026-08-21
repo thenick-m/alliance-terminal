@@ -57,26 +57,39 @@ def populate_get_tab(planet):
     physical = {
         "Gravity": planet.get("Gravity", "N/A"),
         "Radius": planet.get("Radius", "N/A"),
+        "RadiusStuds": planet.get("RadiusStuds", "N/A"),
         "Moons": planet.get("Moons", "N/A"),
     }
-
+ 
     environment = {
         "Atmosphere": planet.get("Atmosphere", "N/A"),
         "Oceans": planet.get("Oceans", "N/A"),
         "Tectonics": planet.get("Tectonics", "N/A"),
         "Life": planet.get("Life", "N/A"),
+
+        "LifeType": planet.get("LifeType", "N/A"),
+        "Habitability": planet.get("Habitability", "N/A"),
+
+        "Rings": planet.get("Rings", "N/A"),
+
+        "Spawnable": planet.get("Spawnable", False),
+        "SEC": planet.get("SpaceEngineClassification", "N/A"),
     }
-
+ 
     resource_fields_normalized = [f.lower() for f in resource_fields]
-
+ 
     deposit_fields = ["Lime", "Quartz", "Saltpeter", "Limestone", "Saltground", "Trees", "Quartz"]
-
+ 
     deposit_resources = {k: v for k, v in planet.items() if k in deposit_fields}
-
+ 
     numeric_resources = {k: v for k, v in planet.items() if k.lower() in resource_fields_normalized and not isinstance(v, bool)}
-    
-    known_fields = set(physical.keys()) | set(environment.keys()) | set(resource_fields) | set(deposit_fields) | {"Name", "StarID", "Index", "PlanetID", "PlanetCount"}
+ 
+    known_fields = (
+        set(physical.keys()) | set(environment.keys()) | set(resource_fields) | set(deposit_fields)
+        | {"Name", "StarID", "Index", "PlanetID", "PlanetCount", "SpaceEngineClassification"}
+    )
     other = {k: v for k, v in planet.items() if k not in known_fields}
+
     
 
     # --- HEADER ---
