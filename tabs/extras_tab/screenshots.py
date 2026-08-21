@@ -33,13 +33,21 @@ def screenshots():
             threading.Thread(target=waoiehfoipaugbp, daemon=True).start()
 
             result = rq.search("(screenshots = True)")
+
+            loading_sound.stop()
+            done = True
             if result == None:
                 sound.play_sound(locally("sounds/error.wav"))
                 sound.play_sound(locally("sounds/error2.wav"))
-                done = True
-                loading_sound.stop()
 
                 dpg.configure_item("viewer_button", label=f"{t("ERROR")}: {t("couldn't contact server")}")
+                time.sleep(1)
+                return
+            elif result.get("error", False):
+                sound.play_sound(locally("sounds/error.wav"))
+                sound.play_sound(locally("sounds/error2.wav"))
+
+                dpg.configure_item("viewer_button", label=f"{t("ERROR")}: {t(result["error"])}")
                 time.sleep(1)
                 return
             else:
