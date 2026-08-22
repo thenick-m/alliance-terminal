@@ -237,25 +237,25 @@ def edit():
         resource_fields = state.field_data["resource_fields"]
 
         physical = {
-            "Gravity": planet.get("Gravity", "N/A"),
-            "Radius": planet.get("Radius", "N/A"),
-            "RadiusStuds": planet.get("RadiusStuds", "N/A"),
-            "Moons": planet.get("Moons", "N/A"),
+            "Gravity": planet.get("Gravity"),
+            "Radius": planet.get("Radius"),
+            "RadiusStuds": planet.get("RadiusStuds"),
+            "Moons": planet.get("Moons"),
         }
     
         environment = {
-            "Atmosphere": planet.get("Atmosphere", "N/A"),
-            "Oceans": planet.get("Oceans", "N/A"),
-            "Tectonics": planet.get("Tectonics", "N/A"),
-            "Life": planet.get("Life", "N/A"),
+            "Atmosphere": planet.get("Atmosphere"),
+            "Oceans": planet.get("Oceans"),
+            "Tectonics": planet.get("Tectonics"),
+            "Life": planet.get("Life"),
 
-            "LifeType": planet.get("LifeType", "N/A"),
-            "Habitability": planet.get("Habitability", "N/A"),
+            "LifeType": planet.get("LifeType"),
+            "Habitability": planet.get("Habitability"),
 
-            "Rings": planet.get("Rings", "N/A"),
+            "Rings": planet.get("Rings"),
 
-            "Spawnable": planet.get("Spawnable", False),
-            "SEC": planet.get("SpaceEngineClassification", "N/A"),
+            "Spawnable": planet.get("Spawnable"),
+            "SEC": planet.get("SpaceEngineClassification"),
         }
     
         resource_fields_normalized = [f.lower() for f in resource_fields]
