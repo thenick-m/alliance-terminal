@@ -46,8 +46,7 @@
         "Index": [],
         "Radius": [],
         "Gravity": [],
-        "Limestone": ["true", "false"],
-        "Saltground": ["true", "false"],
+        "Surface": ["Lime", "Saltpeter", "Ash"],
         "Screenshots": ["true", "false"],
         "SpectralType": []
     },
