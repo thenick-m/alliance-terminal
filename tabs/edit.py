@@ -100,7 +100,7 @@ def edit():
             loading_sound = sound.play_sound(locally("sounds/loading1.wav"))
             while not done[0]:
 
-                dpg.set_value("leaderboard_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("leaderboard_loading_text", f"{t("LOADING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
             sound.play_sound(locally("sounds/receipt.wav"))
@@ -394,7 +394,7 @@ def edit():
             dpg.show_item("edit_loading_text")
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             while not done[0]:
-                dpg.set_value("edit_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("edit_loading_text", f"{t("LOADING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
             sound.play_sound(locally("sounds/receipt.wav"))
@@ -484,7 +484,7 @@ def edit():
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             dpg.show_item("edit_loading_text")
             while not done[0]:
-                dpg.set_value("edit_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("edit_loading_text", f"{t("LOADING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
 

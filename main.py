@@ -19,7 +19,7 @@ from tabs.extras import extras
 from tabs.extras_tab.minigame import draw_maze
 
 METATEXT = "x4AllianceTerminal"
-VERSION = "2.6 Alpha"
+VERSION = "2.8 Alpha"
 
 settings = {}
 
