@@ -287,7 +287,7 @@ def get():
             dpg.show_item("get_loading_text")
             loading_sound = sound.play_sound(locally("sounds/loading2.wav"))
             while not done[0]:
-                dpg.set_value("get_loading_text", f"{t("POLLING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
+                dpg.set_value("get_loading_text", f"{t("LOADING...")} {['/', '-', '\\', '|'][int((time.perf_counter()*4)%4)]}")
                 time.sleep(0.1)
             loading_sound.stop()
             sound.play_sound(locally("sounds/receipt.wav"))

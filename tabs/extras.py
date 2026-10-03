@@ -10,9 +10,6 @@ def extras():
         sound.play_sound(locally("sounds/click.wav"))
 
     with dpg.tab_bar(tag="extras_bar", callback=on_subtab_switch):
-        with dpg.tab(label=t("screenshots"), tag="screenshots_tab"):
-            from tabs.extras_tab.screenshots import screenshots
-            screenshots()
         with dpg.tab(label=t("radio"), tag="radio_tab"):
             from tabs.extras_tab.radio import radio
             radio()
